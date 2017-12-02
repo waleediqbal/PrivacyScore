@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'privacyscore.evaluation',
     'privacyscore.frontend',
     'privacyscore.scanner',
-    'privacyscore.analysis',
+    #'privacyscore.analysis',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
