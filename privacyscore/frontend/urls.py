@@ -39,4 +39,9 @@ urlpatterns = [
     url(r'^team/$', views.team, name='team'),
     url(r'^faq/$', views.faq, name='faq'),
     url(r'^imprint/$', views.imprint, name='imprint'),
+    url(r'^list/(?P<scan_list_id>\d+)/analyse/$', views.analyse_scan_list,
+        name='analyse_scan_list'),
+    url(r'^analyse/$', views.analyse, name='analyse'),
+    url(r'^dashboard/$', views.dashboard, name='dashboard'),
+    url(r'^country_dashboard/$', views.country_dashboard, name='country_dashboard'),
 ]

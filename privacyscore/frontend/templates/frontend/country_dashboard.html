@@ -1,0 +1,141 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block content %}
+    <div class="row dashboard">
+        <div class="col-md-12">
+            <h2>
+                {{ "Country Dashboard" }}
+            </h2>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+            <script src="https://code.highcharts.com/highcharts.js"></script>
+            <script src="https://code.highcharts.com/modules/exporting.js"></script>
+            <form method="get">
+                <input type="hidden" name="configure" value="">
+                <div class="form-group">
+                    {{ country_form.as_p }}
+                </div>
+                <p><button class="btn btn-primary">{% trans "Submit" %}</button></p>
+            </form>
+            {% if web_count %}
+	            <h3>Total number of websites analysed in {{ country }}: {{ web_count }} </h3>
+	        {% endif %}
+            
+         	{% if country_groups %}
+	            <h2>Percentage of checks failed and passed in each category </h3>
+	         	<div id="container">
+	            </div>
+	            <hr>
+	            
+	            <h2>Top checks which are failed by websites in {{ country }} 
+	            <div id="container_bar"></div>
+	        {% endif %}
+            
+            <script>
+            	var container = document.getElementById("container");
+                {% for group, val in country_groups.items %}
+                    container.innerHTML += '<div class="col-md-3"><canvas id="{{ group }}" width="400px!important" height="400px"></canvas></div>';
+                {% endfor %}
+                {% for group, val in country_groups.items %}
+	                var ctx = document.getElementById("{{ group }}");
+		            var data = {
+					  labels: {{val.0|safe}},
+					  datasets: [
+					    {
+					      data: {{val.1|safe}},
+					      backgroundColor: [
+					        "#FF5A5E",
+					        "#5AD3D1"
+					      ],
+					      hoverBackgroundColor: [
+					        "#FF5A5E",
+					        "#5AD3D1"
+					      ]
+					    }]
+					};
+
+					var chart = new Chart(ctx, {
+					  type: 'doughnut',
+					  data: data,
+					  options: {
+					  	responsive: true,
+					    legend: {
+					      display: false
+					    },
+					    title: {
+					    	display: true,
+					    	position: "bottom",
+					    	fontSize: 14,
+					    	text: "{{ group|safe }}"
+					    }
+					  }
+					});
+				{% endfor %}
+
+				var container_bar = document.getElementById("container_bar");
+                {% for group, val in category_groups.items %}
+                    container_bar.innerHTML += '<div id="top-{{ group }}"></div>';
+                {% endfor %}
+                {% for group, val in category_groups.items %}
+                	{% if val.1 %}
+						var ele = document.getElementById('top-{{ group }}');
+						Highcharts.chart(ele, {
+						    chart: {
+						        type: 'bar'
+						    },
+						    title: {
+						        text: "{{ group|safe }}"
+						    },
+						    xAxis: {
+						        categories: {{ val.0|safe }},
+						        title: {
+						            text: null
+						        },
+						        labels: {
+					                style: {
+					                    fontSize:'15px',
+					                    fontWeight: 'bold'
+					                }
+					            }
+						    },
+						    yAxis: {
+						        min: 0,
+						        max: 100,
+						        title: {
+						            text: 'Percentage',
+						            align: 'high'
+						        },
+						        labels: {
+						            overflow: 'justify'
+						        }
+						    },
+						    tooltip: {
+						        valueSuffix: ''
+						    },
+						    plotOptions: {
+						        bar: {
+						            dataLabels: {
+						                enabled: true
+						            }
+						        }
+						    },
+						    tooltip: {
+					            enabled: false
+					        },
+						    credits: {
+						        enabled: false
+						    },
+						    series: [{
+						        name: '',
+						        showInLegend: false,
+						        data: {{ val.1|safe }}
+						    }]
+						});
+					{% endif %}
+				{% endfor %}
+			</script>
+        </div>
+    </div>
+{% endblock content %}

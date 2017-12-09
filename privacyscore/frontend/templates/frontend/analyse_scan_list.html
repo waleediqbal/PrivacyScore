@@ -1,0 +1,41 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block title %}{{ scan_list.name }}{% endblock title %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8">
+            <h2>
+                {{ scan_list.name }}
+            </h2>
+
+            <p>
+                
+            <div style="display: inline; padding: 0.6em; padding-top: 0; padding-left: 0;">
+                <i class="fa fa-tags"></i> <strong>Tags:</strong>&nbsp; &nbsp;  
+                {% for tag in scan_list.tags.all %}
+                    <a class="btn btn-default btn-xs" style="margin-right: 1em"
+                        href="{% url 'frontend:browse' %}?tags={{ tag }}">{{ tag }}</a>
+                {% endfor %}
+            </div>
+            </p>
+            <p>
+                <i class="fa fa-user"></i>
+                <strong>{% trans "Author" %}:</strong> {{ scan_list.pseudonym }}
+            </p>
+            
+            <div style="padding: 1em 1em; background-color: #f6f6f6; border: 1px solid #ddd">
+                {{ scan_list.description|linebreaks }}
+            </div>
+            <div style="padding: 1em 1em">
+	        	{{ table|safe }}
+	        </div>
+	        <div>
+	        	{{ figure|safe }}
+	        </div>
+        </div>
+    </div>
+{% endblock content %}

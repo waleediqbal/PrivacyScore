@@ -314,6 +314,13 @@ class Site(models.Model):
 
         return evaluate_result(self.last_scan__result, group_order)
 
+    def analyse(self, group_order: list):
+        if not self.last_scan__result:
+            return None
+        from privacyscore.analysis.categorize import categorize_result
+
+        return categorize_result(self.last_scan__result, group_order)
+
 
 class ListTagQuerySet(models.QuerySet):
     def annotate_scan_lists__count(self) -> 'ListTagQuerySet':
@@ -488,3 +495,20 @@ class ScanError(models.Model):
 
     def __str__(self) -> str:
         return '{}, {}: {}'.format(str(self.scan), self.test, self.error)
+
+class Analysis(models.Model):
+
+    result = postgres_fields.JSONField(null=True, blank=True)
+
+    start = models.DateTimeField(default=timezone.now, db_index=True)
+    end = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    def __str__(self) -> str:
+        return '{}: {}'.format(self.start, self.end)
+
+    def pre_process(self) -> bool:
+
+        from privacyscore.scanner.tasks import schedule_pre_processing
+        schedule_pre_processing.delay(self.id)
+
+        return True

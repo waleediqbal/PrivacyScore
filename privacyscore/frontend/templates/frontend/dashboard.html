@@ -1,0 +1,299 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block content %}
+    <div class="row dashboard">
+        <div class="col-md-12">
+            <h2>
+                {{ "Global Dashboard" }}
+            </h2>
+            <script src="https://code.highcharts.com/highcharts.js"></script>
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> 
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+            <div class="col-md-8">
+                <div id="container_bad" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+                <div id="container_good" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+
+                <script>
+
+                    window.onload = function () {
+                        var container = document.getElementById("container_country_top");
+                            {% for group, val in top_country_groups.items %}
+                                container.innerHTML += '<div id="top-country-{{ group }}" class="col-md-6" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>';
+                            {% endfor %}
+                            {% for group, val in top_country_groups.items %}
+                                var ele = document.getElementById("top-country-{{ group }}");
+                                Highcharts.chart(ele, {
+                                    chart: {
+                                        plotBackgroundColor: null,
+                                        plotBorderWidth: null,
+                                        plotShadow: false,
+                                        type: 'pie'
+                                    },
+                                    credits: {
+                                        enabled: false
+                                    },
+                                    title: {
+                                        text: '{{ group }}'
+                                    },
+                                    tooltip: {
+                                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                                    },
+                                    plotOptions: {
+                                        pie: {
+                                            allowPointSelect: true,
+                                            cursor: 'pointer',
+                                            dataLabels: {
+                                                enabled: true,
+                                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                                style: {
+                                                    color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                                }
+                                            }
+                                        }
+                                    },
+                                    series: [{
+                                        name: 'Issues',
+                                        colorByPoint: true,
+                                        data: {{ val|safe }}
+                                    }]
+                                });
+                            {% endfor %}
+                        
+                            Highcharts.chart('container_bad', {
+                                chart: {
+                                    plotBackgroundColor: null,
+                                    plotBorderWidth: null,
+                                    plotShadow: false,
+                                    type: 'pie'
+                                },
+                                credits: {
+                                    enabled: false
+                                },
+                                title: {
+                                    text: 'Top 10 countries with most security and privacy issues from lists of scanned websites '
+                                },
+                                tooltip: {
+                                    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                                },
+                                plotOptions: {
+                                    pie: {
+                                        allowPointSelect: true,
+                                        cursor: 'pointer',
+                                        dataLabels: {
+                                            enabled: true,
+                                            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                            style: {
+                                                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                            }
+                                        }
+                                    }
+                                },
+                                series: [{
+                                    name: 'Issues',
+                                    colorByPoint: true,
+                                    data: {{ country_data|safe }}
+                                }]
+                            });
+
+                            Highcharts.chart('container_good', {
+                                chart: {
+                                    plotBackgroundColor: null,
+                                    plotBorderWidth: null,
+                                    plotShadow: false,
+                                    type: 'pie'
+                                },
+                                credits: {
+                                    enabled: false
+                                },
+                                title: {
+                                    text: 'Top 10 countries with least security and privacy issues from lists of scanned websites '
+                                },
+                                tooltip: {
+                                    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                                },
+                                plotOptions: {
+                                    pie: {
+                                        allowPointSelect: true,
+                                        cursor: 'pointer',
+                                        dataLabels: {
+                                            enabled: true,
+                                            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                            style: {
+                                                color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+                                            }
+                                        }
+                                    }
+                                },
+                                series: [{
+                                    name: 'Issues',
+                                    colorByPoint: true,
+                                    data: {{ country_data_good|safe }}
+                                }]
+                            });
+
+                            var container = document.getElementById("container");
+                            {% for group, val in described_groups.items %}
+                                container.innerHTML += '<canvas id="{{ group }}" width="600"></canvas>';
+                            {% endfor %}
+                            {% for group, val in described_groups.items %}
+                                
+                                var ctx = document.getElementById("{{ group }}");
+                                var myChart = new Chart(ctx, {
+                                    type: 'horizontalBar',
+                                   data:{
+                                   labels: {{val.0|safe}},
+                                        datasets: [{
+                                            label: 'Percentage',
+                                            data : {{val.1|safe}},
+                                            backgroundColor: [
+                                                'rgba(255, 99, 132, 0.2)',
+                                                'rgba(54, 162, 235, 0.2)',
+                                                'rgba(255, 206, 86, 0.2)',
+                                                'rgba(75, 192, 192, 0.2)',
+                                                'rgba(153, 102, 255, 0.2)',
+                                                'rgba(255, 159, 64, 0.2)'
+                                            ],
+                                            borderColor: [
+                                                'rgba(255,99,132,1)',
+                                                'rgba(54, 162, 235, 1)',
+                                                'rgba(255, 206, 86, 1)',
+                                                'rgba(75, 192, 192, 1)',
+                                                'rgba(153, 102, 255, 1)',
+                                                'rgba(255, 159, 64, 1)'
+                                            ],
+                                            borderWidth: 1
+                                        }]
+                                },
+                                    options: {
+                                        scales: {
+                                            xAxes: [{
+                                                ticks: {
+                                                    min: 0,
+                                                    //max: 100,
+                                                    callback: function(value) {
+                                                        return value
+                                                    }
+                                                },  
+                                                scaleLabel: {
+                                                    display: true,
+                                                    labelString: "Percentage"
+                                                }
+                                            }],
+                                            yAxes: [{
+                                                barThickness: 30,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return value;
+                                                    }
+                                                }
+                                            }]
+                                        },
+                                        legend: {
+                                            display: false
+                                        },
+                                        title: {
+                                            display: true,
+                                            fontSize: 22,
+                                            text: "{{ group }}"
+                                        }
+                                    }
+                                });
+                        {% endfor %}
+
+                        var container = document.getElementById("container_country_category");
+                            {% for group, val in described_country_groups.items %}
+                                container.innerHTML += '<canvas id="country-{{ group }}" width="600"></canvas>';
+                            {% endfor %}
+                            {% for group, val in described_country_groups.items %}
+                                var ctx = document.getElementById("country-{{ group }}");
+                                var myChart = new Chart(ctx, {
+                                    type: 'horizontalBar',
+                                   data:{
+                                   labels: {{val.0|safe}},
+                                        datasets: [{
+                                            label: 'Percentage',
+                                            data : {{val.1|safe}},
+                                            backgroundColor: [
+                                                'rgba(255, 99, 132, 0.2)',
+                                                'rgba(54, 162, 235, 0.2)',
+                                                'rgba(255, 206, 86, 0.2)',
+                                                'rgba(75, 192, 192, 0.2)',
+                                                'rgba(153, 102, 255, 0.2)',
+                                                'rgba(255, 159, 64, 0.2)'
+                                            ],
+                                            borderColor: [
+                                                'rgba(255,99,132,1)',
+                                                'rgba(54, 162, 235, 1)',
+                                                'rgba(255, 206, 86, 1)',
+                                                'rgba(75, 192, 192, 1)',
+                                                'rgba(153, 102, 255, 1)',
+                                                'rgba(255, 159, 64, 1)'
+                                            ],
+                                            borderWidth: 1
+                                        }]
+                                },
+                                    options: {
+                                        scales: {
+                                            xAxes: [{
+                                                ticks: {
+                                                    min: 0,
+                                                    //max: 100,
+                                                    callback: function(value) {
+                                                        return value
+                                                    }
+                                                },  
+                                                scaleLabel: {
+                                                    display: true,
+                                                    labelString: "Percentage"
+                                                }
+                                            }],
+                                            yAxes: [{
+                                                barThickness: 30,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return value;
+                                                    }
+                                                }
+                                            }]
+                                        },
+                                        legend: {
+                                            display: false
+                                        },
+                                        title: {
+                                            display: true,
+                                            fontSize: 22,
+                                            text: "{{ group }}"
+                                        }
+                                    }
+                                });
+                        {% endfor %}
+                    }
+                </script>
+            </div>
+            <div class="col-md-4">
+                <p>
+                    <a class="btn btn-info"
+                    href="{% url 'frontend:country_dashboard' %}" style="width:100%;">
+                        {% trans "Country Dashboard" %}
+                    </a>
+                </p>
+            </div>
+            <hr>
+            <div id ="container_country_top">
+                <h3>Top 10 countries from scanned websites with most issues in each category</h3>
+            </div>
+            <hr>
+            <div id="container_country_category">
+                <h3>Top 10 issues with respect to country in each category </h3>
+            </div>
+            <hr>
+            <div id="container">
+                <h3>Top 10 issues in each category</h3>
+            </div>
+            
+        </div>
+    </div>
+{% endblock content %}

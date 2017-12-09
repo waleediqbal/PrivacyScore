@@ -1,0 +1,155 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <h2>
+                {{ "Analysis" }}
+            </h2>
+            <!-- import plugin script -->
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.4/Chart.min.js'></script>
+            <!-- bar chart canvas element -->
+            
+            <div>
+                <canvas id="chart" width="1000" height="400"></canvas>
+            </div>
+
+            <div>
+                <canvas id="chart2" width="1000" height="400"></canvas>
+            </div>
+
+            <script>
+                // bar chart data
+                var barData = {
+                labels : [{% for item in labels %}
+                              "{{item}}",
+                          {% endfor %}],
+                datasets : [
+                    {
+                        fillColor: "rgba(151,187,205,0.2)",
+                        strokeColor: "rgba(151,187,205,1)",
+                        pointColor: "rgba(151,187,205,1)",
+                        data : [{% for item in values %}
+                                    {{item}},
+                                {% endfor %}]
+                    }
+                    ]
+                };
+
+                //doughnut chart data
+                // bar chart data
+                var doughnutData = {
+                labels : [{% for item in country_count %}
+                              "{{item}}",
+                          {% endfor %}],
+                datasets : [
+                    {
+                        borderColor: "black",
+                        backgroundColor: [
+                            "#FF6384",
+                            "#63FF84",
+                            "#84FF63",
+                            "#8463FF",
+                            "#6384FF",
+                            "#FF6345",
+                            "#63e27b",
+                            "#84FF12",
+                            "#e55042",
+                            "#6193e2"
+                        ],
+                        data : [{% for item in data_count %}
+                                    {{item}},
+                                {% endfor %}]
+                    }
+                    ]
+                };
+                
+                window.onload = function () {
+                    // get bar chart canvas
+                    var mychart = document.getElementById("chart").getContext("2d");
+                 
+                    steps = {{ max_value }};
+                    max = steps;
+
+                    var barOptions = {
+                        scaleOverride: false,
+                        scaleSteps: steps,
+                        scaleStepWidth: Math.ceil(max / steps),
+                        scaleStartValue: 0,
+                        scaleShowVerticalLines: true,
+                        scaleShowGridLines : true,
+                        barShowStroke : true,
+                        scaleShowLabels: true,
+                        title: {
+                            display: true,
+                            text: 'Number of sites per rating.',
+                            fontSize: 30
+                        }
+                    };
+
+                    // draw bar chart
+                    window.chart = new Chart(mychart, {
+                        type: 'bar',
+                        data: barData,
+                        options : barOptions
+                    });
+
+                    var mychart_doughnut = document.getElementById("chart2").getContext("2d");
+                 
+                    var doughnutOptions = {
+                        animation: {
+                            animateRotate: false,
+                            animateScale: true
+                        },
+                        title: {
+                            display: true,
+                            text: 'Websites with critical rating with respect to countries.',
+                            fontSize: 30
+                        }
+                    };
+
+                    window.chart2 = new Chart(mychart_doughnut, {
+                        type: 'doughnut',
+                        data: doughnutData,
+                        options: doughnutOptions
+                    });
+                }
+            </script>
+
+            <div style="padding: 1em 1em" class="col-md-6">
+                <h3>
+                    {{ "Top 10 privacy/security issues with bad rating" }} <i class="fa fa-lg fa-exclamation-triangle color-bad"></i>
+                </h3>
+                {{ table2|safe }}
+            </div>
+            
+            <div style="padding: 1em 1em">
+                <h3>
+                    {{ "Top 10 privacy/security issues with good rating" }}  <i class="fa fa-lg fa-check-circle color-good"></i>
+                </h3>
+                {{ table4|safe }}
+            </div>
+
+            <div style="padding: 1em 1em">
+                <h3>
+                    {{ "Top 10 privacy/security issues with critical rating" }}  <i class="fa fa-lg fa-times-circle color-critical"></i>
+                </h3>
+                {{ table3|safe }}
+            </div>
+
+            <div style="padding: 1em 1em">
+                <h3>
+                    {{ "Privacy/Security issues in countries with bad rating" }}
+                </h3>
+                {{ table_country|safe }}
+            </div>
+
+            <div style="padding: 1em 1em">
+                {{ table|safe }}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

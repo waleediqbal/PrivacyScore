@@ -380,3 +380,24 @@ panel-group .panel {
 .label-color-experimental {
     background-color: #a0f;
 }
+
+table.dataframe, .dataframe th, .dataframe td {
+  border: none;
+  border-bottom: 1px solid #C8C8C8;
+  border-collapse: collapse;
+  text-align:left;
+  padding: 10px;
+  margin-bottom: 40px;
+  font-size: 1.1em;
+}
+
+
+tr:nth-child(odd)       { background-color:#eee; }
+tr:nth-child(even)  { background-color:#fff; }
+
+.dashboard hr {
+    clear:both;
+    width: 100% !important;
+    margin-top: 300px;
+    margin-bottom: 10px
+}
