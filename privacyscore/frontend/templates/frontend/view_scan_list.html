@@ -113,6 +113,13 @@
                     {% trans "Download List as CSV" %}
                 </a>
             </p>
+
+            <p>
+                <a class="btn btn-info"
+                href="{% url 'frontend:analyse_scan_list' scan_list.pk %}" style="width:100%;">
+                    {% trans "Perform Analysis" %}
+                </a>
+            </p>
             
             <div class="spacer"></div>
             
