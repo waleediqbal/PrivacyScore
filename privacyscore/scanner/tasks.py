@@ -10,10 +10,11 @@ from django.conf import settings
 from django.utils import timezone
 
 from privacyscore.backend.models import RawScanResult, Scan, ScanResult, \
-    ScanError
+    ScanError, Site, Analysis
 from privacyscore.scanner.test_suites import AVAILABLE_TEST_SUITES, \
     TEST_PARAMETERS, SCAN_TEST_SUITE_STAGES
 from privacyscore.utils import get_processes_of_user
+from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
 
 
 class Timeout:
@@ -157,3 +158,39 @@ def _parse_new_results(previous_results: List[Tuple[list, dict]]) -> tuple:
         else:
             errors.append(e)
     return raw, result, errors
+
+@shared_task(queue='master')
+def schedule_pre_processing(obj_id = int):
+
+    analyse = Analysis.objects.get(id=obj_id)
+    analyse.start = timezone.now()
+    analyse.save()
+    sites = Site.objects.order_by('-id')
+    if sites:
+        scan_results = sites.annotate_most_recent_scan_error_count() \
+            .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
+            .annotate_most_recent_scan_result() \
+            .select_related('last_scan')
+
+        group_json = {'items':[]}
+        analysis = []
+
+        for site in scan_results:
+            if site.last_scan__result:
+                analysis = site.analyse(DEFAULT_GROUP_ORDER)[1].items()
+            else:
+                analysis =  None
+            if analysis:
+                for group, result in zip(RESULT_GROUPS.values(), analysis):
+                    for description, title, rating in result[1]:
+                        data = {}
+                        data['group']    = group['short_name'].replace(",", "")
+                        data['url']      = site.url
+                        data['title']    = title
+                        data['category'] = rating
+                        data['country']  = site.last_scan__result['a_locations'][0] if site.last_scan__result['a_locations'] else None
+                        group_json.get('items').append(data)
+
+        analyse.result = group_json['items']
+        analyse.end = timezone.now()
+        analyse.save()
