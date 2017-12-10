@@ -18,6 +18,8 @@ ALLOWED_HOSTS = ['*']
 
 ADMINS = (('Waleed', 'waleediqbal57@gmail.com'),)
 
+SERVER_EMAIL = 'admin@privacyscore.com'
+
 # Application definition
 
 INSTALLED_APPS = [
