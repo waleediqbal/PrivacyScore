@@ -196,7 +196,24 @@ RAW_DATA_DELETE_AFTER = timedelta(days=10)
 
 SCAN_SCHEDULE_DAEMON_SLEEP = 60
 
-
+# logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler'
+        }
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
 
 # debug toolbar
 if DEBUG:
