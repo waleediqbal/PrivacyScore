@@ -809,8 +809,8 @@ def analyse(request: HttpRequest) -> HttpResponse:
 def dashboard(request: HttpRequest) -> HttpResponse:
     # schedule analysis process in the background
     # TODO: add and run this in cron job later
-    #analyse = Analysis.objects.create()
-    #analyse.pre_process()
+    analyse = Analysis.objects.create()
+    analyse.pre_process()
 
     analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
 

@@ -165,7 +165,7 @@ def schedule_pre_processing(obj_id = int):
     analyse = Analysis.objects.get(id=obj_id)
     analyse.start = timezone.now()
     analyse.save()
-    sites = Site.objects.order_by('-id')
+    sites = Site.objects.order_by('-id')[:5000]
     if sites:
         scan_results = sites.annotate_most_recent_scan_error_count() \
             .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
