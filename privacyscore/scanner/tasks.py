@@ -188,9 +188,8 @@ def schedule_pre_processing(obj_id = int):
                         data['url']      = site.url
                         data['title']    = title
                         data['category'] = rating
-                        country          = web.last_scan__result.get("a_locations", None)
-                        data['country']  = country[0] if country else None
-                        data['country']  = site.last_scan__result['a_locations'][0] if site.last_scan__result['a_locations'] else None
+                        site_country     = site.last_scan__result.get("a_locations", None)
+                        data['country']  = site_country[0] if country else None
                         group_json.get('items').append(data)
 
         analyse.result = group_json['items']
