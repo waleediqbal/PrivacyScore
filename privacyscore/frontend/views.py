@@ -1,9 +1,19 @@
 import csv
 import json
 import re
+import collections
+import pandas as pd
+import matplotlib.pyplot as plt
+import mpld3
+from tkinter import *
 from collections import Counter, defaultdict
 from typing import Iterable, Union
 from urllib.parse import urlencode
+import urllib
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from collections import OrderedDict
+from io import StringIO, BytesIO
+import privacyscore.analysis.data_queries as queries
 
 from django.conf import settings
 from django.contrib import messages
@@ -22,7 +32,7 @@ from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 
-from privacyscore.backend.models import ListColumn, ListColumnValue, ListTag,  Scan, ScanList, Site, ScanResult
+from privacyscore.backend.models import ListColumn, ListColumnValue, ListTag,  Scan, ScanList, Site, ScanResult, Analysis
 from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
 from privacyscore.evaluation.site_evaluation import UnrateableSiteEvaluation
 from privacyscore.frontend.forms import SingleSiteForm, CreateListForm
