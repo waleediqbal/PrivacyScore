@@ -10,7 +10,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from privacyscore.backend.models import RawScanResult, Scan, ScanResult, \
-    ScanError, Site, Analysis
+    ScanError, Site, Analysis, AnalysisCategory
 from privacyscore.scanner.test_suites import AVAILABLE_TEST_SUITES, \
     TEST_PARAMETERS, SCAN_TEST_SUITE_STAGES
 from privacyscore.utils import get_processes_of_user
