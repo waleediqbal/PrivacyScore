@@ -14,6 +14,9 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from collections import OrderedDict
 from io import StringIO, BytesIO
 import privacyscore.analysis.data_queries as queries
+from pandas.io.json import json_normalize
+import psycopg2 as pg
+import pandas.io.sql as psql
 
 from django.conf import settings
 from django.contrib import messages

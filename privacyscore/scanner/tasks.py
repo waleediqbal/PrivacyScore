@@ -184,7 +184,8 @@ def schedule_pre_processing(obj_id = int):
                 data = []
                 data1 = {}
                 data1['url']      = site.url
-                data1['country']  = site.last_scan__result['a_locations'][0] if site.last_scan__result['a_locations'] else None
+                site_country      = site.last_scan__result.get("a_locations", None)
+                data1['country']  = site_country[0] if site_country else None
                 for group, result in zip(RESULT_GROUPS.values(), analysis):
                     for description, title, rating in result[1]:
                         #data = {}
