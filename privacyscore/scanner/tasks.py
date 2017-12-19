@@ -165,14 +165,14 @@ def schedule_pre_processing(obj_id = int):
     analyse = Analysis.objects.get(id=obj_id)
     analyse.start = timezone.now()
     analyse.save()
-    sites = Site.objects.order_by('-id')[:5000]
+    sites = Site.objects.order_by('-id')
     if sites:
         scan_results = sites.annotate_most_recent_scan_error_count() \
             .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
             .annotate_most_recent_scan_result() \
             .select_related('last_scan')
 
-        group_json = {'items':[]}
+        group_json = {}
         analysis = []
 
         for site in scan_results:
@@ -181,17 +181,20 @@ def schedule_pre_processing(obj_id = int):
             else:
                 analysis =  None
             if analysis:
+                data = []
+                data1 = {}
+                data1['url']      = site.url
+                data1['country']  = site.last_scan__result['a_locations'][0] if site.last_scan__result['a_locations'] else None
                 for group, result in zip(RESULT_GROUPS.values(), analysis):
                     for description, title, rating in result[1]:
-                        data = {}
-                        data['group']    = group['short_name'].replace(",", "")
-                        data['url']      = site.url
-                        data['title']    = title
-                        data['category'] = rating
-                        site_country     = site.last_scan__result.get("a_locations", None)
-                        data['country']  = site_country[0] if site_country else None
-                        group_json.get('items').append(data)
+                        #data = {}
+                        d = {}
+                        d[title] = rating
+                        data1[title] = str(rating)
+                data.append(data1)
+                AnalysisCategory.objects.create(
+                    analysis_id=analyse.id,
+                    result=data)
 
-        analyse.result = group_json['items']
         analyse.end = timezone.now()
         analyse.save()

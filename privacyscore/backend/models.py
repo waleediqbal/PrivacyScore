@@ -512,3 +512,10 @@ class Analysis(models.Model):
         schedule_pre_processing.delay(self.id)
 
         return True
+
+class AnalysisCategory(models.Model):
+    result = postgres_fields.JSONField(null=True, blank=True)
+    analysis = models.ForeignKey(
+        Analysis, on_delete=models.CASCADE, related_name='category', null=True, blank=True)
+    def __str__(self) -> str:
+        return '{}'.format(str(self.analysis))

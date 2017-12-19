@@ -38,7 +38,7 @@ from privacyscore.evaluation.site_evaluation import UnrateableSiteEvaluation
 from privacyscore.frontend.forms import SingleSiteForm, CreateListForm
 from privacyscore.frontend.models import Spotlight
 from privacyscore.utils import normalize_url
-
+from privacyscore.analysis.default_checks import CHECKS
 
 def index(request: HttpRequest) -> HttpResponse:
     scan_form = SingleSiteForm()
@@ -814,32 +814,15 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 
     analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
 
-#    my_sites = Site.objects.order_by('-id')[:50]
- #   my_s = my_sites.annotate_most_recent_scan_error_count() \
-  #      .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
-   #     .annotate_most_recent_scan_result() \
-    #    .select_related('last_scan')
+    #connection = pg.connect("dbname='privacy_score' user='privacyscore' host='localhost' password='privacyscore'")
+    #sql = "select * from backend_analysiscategory WHERE analysis_id = %s" % analyse.id
+    analysis_category = analyse.category.values('result')
 
-    group_json = {'items':[]}
-    #analyse = []
+    df = json_normalize(analysis_category, record_path='result')
 
-#    for web in my_s:
- #       if web.last_scan__result:
-  #          analyse = web.analyse(DEFAULT_GROUP_ORDER)[1].items()
-   #     else:
-    #        analyse =  None
-     #   if analyse:
-      #      for group, eva in zip(RESULT_GROUPS.values(), analyse):
-       #         for description, title, rating in eva[1]:
-        #            d = {}
-         #           d['group'] = group['short_name'].replace(",", "")
-          #          d['title'] = title
-           #         d['category'] = rating
-            #        d['country'] = web.last_scan__result['a_locations'][0] if web.last_scan__result['a_locations'] else None
-             #       group_json.get('items').append(d)
-
+    analyse = True
     if analyse:
-        result = analyse.result
+        result = df
 
         #countries with most issues in each category
         country_category_list = []
@@ -854,23 +837,30 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         issues_category_list = queries.issues_category_list(result)
 
 
-        df1 = pd.DataFrame(result, columns = ['category', 'country'])
+        #df1 = pd.DataFrame(result, columns = ['category', 'country'])
         
-        df1 = df1.dropna()
+        #df1 = df1.dropna()
 
         #print(df1.groupby(['category']).size())
             
         #print(df1.apply(lambda x: sum(x.isnull()),axis=0))
 
         #top countries with most issues
-        groupby_country_total = df1.groupby(['country', 'category']).size()
+        mydict = []
+        for group in DEFAULT_GROUP_ORDER:
+            for check, data in CHECKS[group].items():
+                mydict.append(data.get('short_title'))
+
+        melted_data = pd.melt(df, id_vars=['country'], value_vars=mydict, var_name='check', value_name='value')
+
+        groupby_country_total = melted_data.groupby(['country', 'value']).size()
 
         d = json.loads(groupby_country_total.unstack().to_json())
-        data_count = (sorted(d['0.0'].values()))[-10:]
-        country_count = (sorted(d['0.0'], key=d['0.0'].__getitem__))[-10:]
+        data_count = (sorted(d['0'].values()))[-10:]
+        country_count = (sorted(d['0'], key=d['0'].__getitem__))[-10:]
 
-        data_count1 = (sorted(d['1.0'].values()))[-10:]
-        country_count1 = (sorted(d['1.0'], key=d['1.0'].__getitem__))[-10:]
+        data_count1 = (sorted(d['1'].values()))[-10:]
+        country_count1 = (sorted(d['1'], key=d['1'].__getitem__))[-10:]
 
         my_array = {'items':[]}
         for cnt, ctry in zip(data_count, country_count):
