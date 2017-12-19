@@ -34,12 +34,12 @@ def country_category_list(myList = []) -> OrderedDict:
 		melted_data = melted_data.fillna(0).astype(int)
 		
 		d = json.loads(melted_data.unstack().to_json())
-		print(d)
-		d['0.0'] = {k: v for k, v in d['0.0'].items() if v!=None} #remove None values
-		d['0.0'] = {k: int(v) for k, v in d['0.0'].items()} #convert values to int
+
+		d['0'] = {k: v for k, v in d['0'].items() if v!=None} #remove None values
+		d['0'] = {k: int(v) for k, v in d['0'].items()} #convert values to int
 	    
-		data_count = (sorted(d['0.0'].values()))[-10:]
-		country_count = (sorted(d['0.0'], key=d['0.0'].__getitem__))[-10:]
+		data_count = (sorted(d['0'].values()))[-10:]
+		country_count = (sorted(d['0'], key=d['0'].__getitem__))[-10:]
 
 		my_array1 = {'items':[]}
 		for cnt, ctry in zip(data_count, country_count):

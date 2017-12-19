@@ -53,9 +53,9 @@ def analyse_group(group: str, result: dict):
             res = data['missing']
         if not res:
             classifications.append(None)
-            descriptions.append((None, data.get('title'), None))
+            descriptions.append((None, data.get('short_title'), None))
             continue
         
         classifications.append(res['classification'])
-        descriptions.append((res['description'], data.get('title'), res['classification']))
+        descriptions.append((res['description'], data.get('short_title'), res['classification']))
     return classifications, descriptions
