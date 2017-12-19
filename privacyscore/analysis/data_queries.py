@@ -29,12 +29,12 @@ def country_category_list(myList = []) -> OrderedDict:
 		melted_data = pd.melt(df, id_vars=['country'], value_vars=mydict, var_name='check', value_name='value')
 
 		melted_data = melted_data.groupby(by=['country', 'value'])['value'].size()
-		print(melted_data)
 
 		#dee = df_group.groupby(['country', 'category']).size()
-		#dee = dee.fillna(0).astype(int)
+		melted_data = melted_data.fillna(0).astype(int)
 		
 		d = json.loads(melted_data.unstack().to_json())
+		print(d)
 		d['0.0'] = {k: v for k, v in d['0.0'].items() if v!=None} #remove None values
 		d['0.0'] = {k: int(v) for k, v in d['0.0'].items()} #convert values to int
 	    
