@@ -2,6 +2,7 @@ import os
 from getpass import getuser
 import signal
 import traceback
+import pandas as pd
 from typing import List, Tuple
 from socket import getfqdn
 
@@ -171,8 +172,6 @@ def schedule_pre_processing(obj_id = int):
             .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
             .annotate_most_recent_scan_result() \
             .select_related('last_scan')
-
-        group_json = {}
         analysis = []
 
         for site in scan_results:
@@ -182,17 +181,14 @@ def schedule_pre_processing(obj_id = int):
                 analysis =  None
             if analysis:
                 data = []
-                data1 = {}
-                data1['url']      = site.url
-                site_country      = site.last_scan__result.get("a_locations", None)
-                data1['country']  = site_country[0] if site_country else None
+                site_data = {}
+                site_data['url']        = site.url
+                site_data['country']    = site.last_scan__result['a_locations'][0] if site.last_scan__result['a_locations'] else None
+                site_data['mx_country'] = site.last_scan__result['mx_locations'][0] if site.last_scan__result['mx_locations'] else None
                 for group, result in zip(RESULT_GROUPS.values(), analysis):
                     for description, title, rating in result[1]:
-                        #data = {}
-                        d = {}
-                        d[title] = rating
-                        data1[title] = str(rating)
-                data.append(data1)
+                        site_data[title] = str(rating)
+                data.append(site_data)
                 AnalysisCategory.objects.create(
                     analysis_id=analyse.id,
                     result=data)
