@@ -13,10 +13,10 @@ import urllib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from collections import OrderedDict
 from io import StringIO, BytesIO
-import privacyscore.analysis.data_queries as queries
 from pandas.io.json import json_normalize
 import psycopg2 as pg
 import pandas.io.sql as psql
+import privacyscore.analysis.data_queries as queries
 
 from django.conf import settings
 from django.contrib import messages
@@ -35,13 +35,14 @@ from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 
-from privacyscore.backend.models import ListColumn, ListColumnValue, ListTag,  Scan, ScanList, Site, ScanResult, Analysis
+from privacyscore.backend.models import ListColumn, ListColumnValue, ListTag,  Scan, ScanList, Site, ScanResult, Analysis, AnalysisCategory
 from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
 from privacyscore.evaluation.site_evaluation import UnrateableSiteEvaluation
 from privacyscore.frontend.forms import SingleSiteForm, CreateListForm
 from privacyscore.frontend.models import Spotlight
 from privacyscore.utils import normalize_url
 from privacyscore.analysis.default_checks import CHECKS
+from privacyscore.analysis.country_iso_mapping import COUNTRY_DICT
 
 def index(request: HttpRequest) -> HttpResponse:
     scan_form = SingleSiteForm()
@@ -746,7 +747,7 @@ def analyse(request: HttpRequest) -> HttpResponse:
         'right': ','.join(_move_element(category_order, category, 1))
     } for category in category_order]
 
-    my_sites = Site.objects.order_by('-id')[:100]
+    my_sites = Site.objects.order_by('-id')[:10]
     my_s = my_sites.annotate_most_recent_scan_error_count() \
         .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
         .annotate_most_recent_scan_result() \
@@ -755,6 +756,8 @@ def analyse(request: HttpRequest) -> HttpResponse:
     total_json = ['doubleplusgood', 'good', 'neutral', 'warning', 'bad', 'critical']
     total_count = [0,0,0,0,0,0]
     group_json = {'items':[]}
+    data_json = {'items':[]}
+    final_json = {'items':[]}
     country_group_json = {'items':[]}
     evaluation = []
     analyse = []
@@ -772,8 +775,8 @@ def analyse(request: HttpRequest) -> HttpResponse:
         ind = total_json.index(web.evaluated.rating.rating)
         total_count[ind] = total_count[ind] + 1 
 
-        print(web.scans.order_by('end'))
-        print("++++++++++++++++++++++++++")
+        #print(web.scans.order_by('end'))
+        #print("++++++++++++++++++++++++++")
 
         #count country with website overall rating
         d1 = {}
@@ -787,15 +790,45 @@ def analyse(request: HttpRequest) -> HttpResponse:
         else:
             evaluation =  None
         if analyse:
+            data = {}
+            data['url']      = web.url
+            data['country']  = web.last_scan__result['a_locations'][0] if web.last_scan__result['a_locations'] else None
+            data['results']  = []
+            d = {}
+            print(web.url)
             for group, eva in zip(RESULT_GROUPS.values(), analyse):
                 for description, title, rating in eva[1]:
-                    d = {}
-                    d['group'] = group['name'].replace(":", " -")
-                    d['title'] = title
-                    d['rating'] = rating
-                    group_json.get('items').append(d)
+                    #d['group'] = group['name'].replace(":", " -")
+                    #d['title'] = title
+                    #d['rating'] = rating
+                    title = title
+                    d[title] = rating
+                    data['results'].append(d)
+                    #group_json.get('items').append(d)
+            print(d)
+            print("+++++++++++++++++++++++++++++")
+            data_json.get('items').append(data)
+
+    connection = pg.connect("dbname='privacy_score' user='privacyscore' host='localhost' password='privacyscore'")
+    #sql = "select id, result->'https' as https from backend_scanresult GROUP BY id,result->'A_CNAME' LIMIT 10000"
+    sql = "select result from backend_scanresult LIMIT 40"
+    df = pd.read_sql_query(sql, con=connection)
+    df = json_normalize(df['result'])
+    print(list(df.columns))
+    #print(df.memory_usage())
+    #with open('sample1.csv') as fh:
+     #   df = pd.DataFrame.from_records(records_from_json(fh))
+      #  print(df)
+       # print(df.memory_usage())
 
     df = pd.DataFrame(group_json['items'], columns = ['group', 'title', 'rating'])
+    #print(df.memory_usage())
+
+    #df = pd.DataFrame(group_json['items'])
+
+    #df.to_csv('records', encoding='utf-8', index=False)
+    #df = pd.read_csv('records')
+
     groupby_group = df.groupby(['group', 'title', 'rating'])['rating'].size()
 
     #my = groupby_group / groupby_group.groupby(level = [0,2]).transform(sum)
@@ -812,18 +845,22 @@ def analyse(request: HttpRequest) -> HttpResponse:
 def dashboard(request: HttpRequest) -> HttpResponse:
     # schedule analysis process in the background
     # TODO: add and run this in cron job later
-    #analyse = Analysis.objects.create()
-    #analyse.pre_process()
+    analyse = Analysis.objects.create()
+    analyse.pre_process()
 
     analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+    sss = analyse.category.values('result')
 
-    #connection = pg.connect("dbname='privacy_score' user='privacyscore' host='localhost' password='privacyscore'")
-    #sql = "select * from backend_analysiscategory WHERE analysis_id = %s" % analyse.id
-    analysis_category = analyse.category.values('result')
+    df = json_normalize(sss, record_path='result')
+    #print(df.apply(pd.value_counts))
 
-    df = json_normalize(analysis_category, record_path='result')
+    # total number of websites in this country #
+    df1 = pd.DataFrame(df, columns=['url'])
+    df1.drop_duplicates('url', inplace = True)
+    web_count = df1.shape[0]
 
-    analyse = True
+    sites_total = df.country.value_counts().to_dict()
+
     if analyse:
         result = df
 
@@ -839,6 +876,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         issues_category_list = []
         issues_category_list = queries.issues_category_list(result)
 
+        queries.test_function(result)
 
         #df1 = pd.DataFrame(result, columns = ['category', 'country'])
         
@@ -854,22 +892,49 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             for check, data in CHECKS[group].items():
                 mydict.append(data.get('short_title'))
 
+        if 'Website scan succeeded' in mydict:
+            mydict.remove('Website scan succeeded')
+
         melted_data = pd.melt(df, id_vars=['country'], value_vars=mydict, var_name='check', value_name='value')
 
-        groupby_country_total = melted_data.groupby(['country', 'value']).size()
+        #groupby_country_total = melted_data.groupby(['country', 'value']).size()
 
-        d = json.loads(groupby_country_total.unstack().to_json())
-        data_count = (sorted(d['0'].values()))[-10:]
-        country_count = (sorted(d['0'], key=d['0'].__getitem__))[-10:]
+        melted_data = melted_data.groupby(['country', 'value'])['value'].count().reset_index(name="count")
 
-        data_count1 = (sorted(d['1'].values()))[-10:]
-        country_count1 = (sorted(d['1'], key=d['1'].__getitem__))[-10:]
+        melted_data['value'] = melted_data['value'].map({'0': 'bad', '1': 'good'})
+
+        new1 = melted_data[melted_data['value'] == 'bad'].sort_values(by=['count', 'country'], ascending=[False, True])
+
+        new1['percentage'] = round(100 * new1['count']  / new1['count'].sum(), 2)
+
+        new1 = new1.nlargest(10, columns=['percentage'])
+
+        #d = json.loads(new1.unstack().to_json())
+        d = json.loads(new1.to_json(), object_pairs_hook=OrderedDict)
+        #data_count = (sorted(d['0'].values(), reverse=True))[:10]
+        #country_count = (sorted(d['0'], reverse=True, key=d['0'].__getitem__))[:10]
+        data_count = list(d['percentage'].values())
+        country_count = list(d['country'].values())
+
+        new1 = melted_data[melted_data['value'] == 'good'].sort_values(by=['count', 'country'], ascending=[False, True])
+
+        new1['percentage'] = round(100 * new1['count']  / new1['count'].sum(), 2)
+
+        new1 = new1.nlargest(10, columns=['percentage'])
+
+        d = json.loads(new1.to_json(), object_pairs_hook=OrderedDict)
+
+        #data_count1 = (sorted(d['1'].values(), reverse=True))[:10]
+        #country_count1 = (sorted(d['1'], reverse=True, key=d['1'].__getitem__))[:10]
+        data_count1 = list(d['percentage'].values())
+        country_count1 = list(d['country'].values())
 
         my_array = {'items':[]}
         for cnt, ctry in zip(data_count, country_count):
             d1 = {}
-            d1['name'] = ctry
-            d1['y'] = cnt
+            d1['name']  = ctry
+            d1['y']     = cnt
+            d1['total1'] = str(sites_total.get(ctry))
             my_array.get('items').append(d1)
 
         my_array1 = {'items':[]}
@@ -877,8 +942,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             d1 = {}
             d1['name'] = ctry
             d1['y'] = cnt
+            d1['total1'] = str(sites_total.get(ctry))
             my_array1.get('items').append(d1)
-
 
         return render(request, 'frontend/dashboard.html', {
             'data_count': data_count,
@@ -887,7 +952,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             'country_data_good': my_array1['items'],
             'described_groups': issues_category_list,
             'described_country_groups': country_issues_category_list,
-            'top_country_groups': country_category_list
+            'top_country_groups': country_category_list,
+            'web_count': web_count
         })
     else:
         messages.warning(
@@ -896,9 +962,11 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         })
 
 def country_dashboard(request: HttpRequest) -> HttpResponse:
-    analyse = Analysis.objects.exclude(result__isnull=True).order_by('-id')[0]
+    analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+    sss = analyse.category.values('result')
+    df = json_normalize(sss, record_path='result')
 
-    result = [ item['country'] for item in analyse.result ]
+    result = df['country']
     result = list(set(result))
     result.sort(key=str.lower)
 
@@ -914,58 +982,72 @@ def country_dashboard(request: HttpRequest) -> HttpResponse:
         country_dict = dict(country_choices)
         form_country = country_dict[int(request.GET['country'])]
 
+        items = analyse.category.filter(result__contains=[{'country':form_country}]).values('result')
+
+        items = json_normalize(items, record_path='result')
+
         # only get the items for the selected country #
-        items = [item for item in analyse.result if item.get('country') == form_country]
+        #items = [item for item in analyse.result if item.get('country') == form_country]
         
         # total number of websites in this country #
-        df = pd.DataFrame(items, columns = ['url'])
-        df.drop_duplicates('url', inplace = True)
-        web_count = df.shape[0]
+        df1 = pd.DataFrame(items, columns=['url'])
+        df1.drop_duplicates('url', inplace = True)
+        web_count = df1.shape[0]
 
         #individual category donutchart
-        df = pd.DataFrame(items, columns = ['group', 'category'])
+        df = pd.DataFrame(items)
         df = df.dropna()
-        for group in RESULT_GROUPS.values():
-            df_group = df[df['group'] == group['short_name']]
-            grouped = df_group.groupby(['group', 'category'])['category'].count()
-            my = round(grouped / (grouped.groupby(level = 0).transform(sum)) * 100, 2).reset_index(name="percentage")
-            my['category'] = my['category'].map({0.0: 'bad', 1.0: 'good'})
-            new1 = json.loads(my.to_json(), object_pairs_hook=OrderedDict)
-            cat_array = list(new1['category'].values())
+        for group in DEFAULT_GROUP_ORDER:
+            mydict = []
+
+            for check, data in CHECKS[group].items():
+                mydict.append(data.get('short_title'))
+
+            melted_data = pd.melt(df, id_vars=['country'], value_vars=mydict, var_name='check', value_name='value')
+            #print(melted_data.value.value_counts())
+            #print(len(melted_data.value))
+            melted_data = round(100 * melted_data.value.value_counts() / len(melted_data.value), 1).reset_index(name="percentage").rename(columns={'index': 'value'})
+            melted_data['value'] = melted_data['value'].map({'0': 'failed', '1': 'passed', 'None':'Neutral'})
+            melted_data = melted_data.dropna() # drop none values
+            melted_data = melted_data.sort_values(by=['value'], ascending=[True])
+
+            new1 = json.loads(melted_data.to_json(), object_pairs_hook=OrderedDict)
+            cat_array = list(new1['value'].values())
             per_array = list(new1['percentage'].values())
-            country_groups[group['long_name']] = (cat_array, per_array)
-        
+            country_groups[group] = (cat_array, per_array)
+
         #by category, individual checks
-        df = pd.DataFrame(items, columns = ['group', 'title', 'category'])
-        df = df.dropna()
         category_groups = OrderedDict()
-        for group in RESULT_GROUPS.values():
-            df_group = df[df['group'] == group['short_name']]
-            grouped = df_group.groupby(['title', 'category'])['category'].count()
+        for group in DEFAULT_GROUP_ORDER:
+            mydict = []
+
+            for check, data in CHECKS[group].items():
+                mydict.append(data.get('short_title'))
+
+            melted_data = pd.melt(df, id_vars=['country'], value_vars=mydict, var_name='check', value_name='value')
+            grouped = melted_data.groupby(['check', 'value'])['value'].count()
             my = round(grouped / (grouped.groupby(level = [0]).transform(sum)) * 100, 2).reset_index(name="percentage")
-            my['category'] = my['category'].map({0.0: 'bad', 1.0: 'good'})
-            
+            my['value'] = my['value'].map({'0': 'bad', '1': 'good'})
 
         #by category, top issues
-        df = pd.DataFrame(items, columns = ['group', 'title', 'category'])
-        df = df.dropna()
         category_groups = OrderedDict()
-        for group in RESULT_GROUPS.values():
-            df_group = df[df['group'] == group['short_name']]
-            grouped = df_group.groupby(['title', 'category'])['category'].count()
-            my = round(grouped / (grouped.groupby(level = [0]).transform(sum)) * 100, 2).reset_index(name="percentage")
-            
-            my['category'] = my['category'].map({0.0: 'bad', 1.0: 'good'})
-            
-            de1 = ((my[my['category'] == 'bad']).sort_values(by=['percentage'], ascending=[False]))
-            my = de1.nlargest(5, columns=['percentage'])
-            print(my)
+        for group in DEFAULT_GROUP_ORDER:
+            mydict = []
+
+            for check, data in CHECKS[group].items():
+                mydict.append(data.get('short_title'))
+
+            melted_data = pd.melt(df, id_vars=['country'], value_vars=mydict, var_name='check', value_name='value')
+            grouped = melted_data.groupby(['check', 'value'])['value'].count()
+
+            melted_data = round(grouped / (grouped.groupby(level = [0]).transform(sum)) * 100, 2).reset_index(name="percentage")
+            melted_data['value'] = melted_data['value'].map({'0': 'bad', '1': 'good', 'None':'Neutral'})
+            de1 = ((melted_data[melted_data['value'] == 'bad']).sort_values(by=['percentage'], ascending=[False]))
+            my = de1.nlargest(10, columns=['percentage'])
             new1 = json.loads(my.to_json(), object_pairs_hook=OrderedDict)
             per_array   = list(new1['percentage'].values())
-            title_array = list(new1['title'].values())
-            category_groups[group['long_name']] = (title_array, per_array)
-
-        print(category_groups)
+            title_array = list(new1['check'].values())
+            category_groups[group] = (title_array, per_array)
 
         return render(request, 'frontend/country_dashboard.html', {
             'web_count'    : web_count,
@@ -978,4 +1060,176 @@ def country_dashboard(request: HttpRequest) -> HttpResponse:
 
     return render(request, 'frontend/country_dashboard.html', {
         'country_form' : country_form
+    })
+
+def detailed_dashboard(request: HttpRequest) -> HttpResponse:
+    analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+    sss = analyse.category.values('result')
+
+    df = json_normalize(sss, record_path='result')
+
+    if analyse:
+        result = df
+
+        #top countries with most issues in each check
+        country_detailed_list = []
+        country_detailed_list = queries.check_failure_country(result)
+
+        # queries.association(result)
+
+    return render(request, 'frontend/detailed_dashboard.html', {
+        'country_detailed_list' : country_detailed_list
+    })
+
+def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
+    analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+
+    ssl_detailed_list = []
+    web_vulnerabilities = []
+
+    if analyse:
+        sss = analyse.category.values('result')
+        df = json_normalize(sss, record_path='result')
+        #df.drop('country', axis=1, inplace=True)
+        #df.drop('mx_country', axis=1, inplace=True)
+        #df.drop('url', axis=1, inplace=True)
+        #result = df.apply(pd.value_counts)
+
+        df_country = df['country']
+        countries = list(set(df_country))
+        countries = list(filter(None, countries))
+        countries.sort(key=str.lower)
+
+        country_choices = [(None, _('Global'))] + list(enumerate(x for x in countries))
+
+        class CountryForm(forms.Form):
+            country = forms.ChoiceField(choices=country_choices, required=True)
+
+        country_form = CountryForm
+
+        if 'country' in request.GET:
+            country_groups = OrderedDict()
+            country_dict = dict(country_choices)
+            if int(request.GET['country']) in country_dict:
+                form_country = country_dict[int(request.GET['country'])]
+                items = analyse.category.filter(result__contains=[{'country':form_country}]).values('result')
+                df = json_normalize(items, record_path='result')
+
+        country_count = pd.DataFrame()
+        country_count = df.country.value_counts().reset_index().rename(columns={'index': 'country', 'country': 'z'})
+        country_count['code'] = country_count['country'].map(COUNTRY_DICT)
+        country_count['z'] = round((country_count['z'] / country_count['z'].sum()) * 100, 1)
+        country_json = country_count.to_json(orient='records')
+
+        # total number of websites in this country #
+        df1 = pd.DataFrame(df, columns=['url'])
+        df1.drop_duplicates('url', inplace = True)
+        web_count = df1.shape[0]
+
+        result = df
+        #countries with most issues in each category
+        ssl_detailed_list, web_vulnerabilities, hsts_groups, valid_hsts, hsts_included_data, https_data, other_checks, security_groups = queries.enc_web_results(result)
+
+    return render(request, 'frontend/enc_web_dashboard.html', {
+        'ssl_list' : ssl_detailed_list,
+        'vul_list' : web_vulnerabilities,
+        'hsts_groups': hsts_groups,
+        'valid_hsts': valid_hsts,
+        'hsts_included_data': hsts_included_data,
+        'https_data': https_data,
+        'other_checks': other_checks,
+        'security_groups': security_groups,
+        'country_json': country_json,
+        'sites_count': web_count,
+        'last_analysis': analyse.end,
+        'country_form': country_form
+    })
+
+def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
+    analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+    sss = analyse.category.values('result')
+
+    df = json_normalize(sss, record_path='result')
+    if analyse:
+        df_country = df['mx_country']
+        countries = list(set(df_country))
+        countries = list(filter(None, countries))
+        countries.sort(key=str.lower)
+
+        country_choices = [(None, _('Global'))] + list(enumerate(x for x in countries))
+
+        class CountryForm(forms.Form):
+            country = forms.ChoiceField(choices=country_choices, required=True)
+
+        country_form = CountryForm
+
+        if 'country' in request.GET:
+            country_groups = OrderedDict()
+            country_dict = dict(country_choices)
+            if int(request.GET['country']) in country_dict:
+                form_country = country_dict[int(request.GET['country'])]
+                items = analyse.category.filter(result__contains=[{'mx_country':form_country}]).values('result')
+                df = json_normalize(items, record_path='result')
+
+        # total number of websites in this country #
+        df1 = pd.DataFrame(df, columns=['url'])
+        df1.drop_duplicates('url', inplace = True)
+        web_count = df1.shape[0]
+        result = df
+
+        country_count = df.mx_country.value_counts().reset_index().rename(columns={'index': 'mx_country', 'mx_country': 'z'})
+        country_count['code'] = country_count['mx_country'].map(COUNTRY_DICT)
+        country_count['z'] = round((country_count['z'] / country_count['z'].sum()) * 100, 1)
+        country_json = country_count.to_json(orient='records')
+
+        mx_enc_support, tls_group, vul_group = queries.enc_mail_results(result)
+
+    return render(request, 'frontend/enc_mail_dashboard.html', {
+        'mx_enc_support' : mx_enc_support,
+        'tls_group' : tls_group,
+        'vul_group' : vul_group,
+        'country_json': country_json,
+        'sites_count': web_count,
+        'last_analysis': analyse.end,
+        'country_form': country_form
+    })
+
+def web_privacy_dashboard(request: HttpRequest) -> HttpResponse:
+    analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+
+    ssl_detailed_list = []
+    web_vulnerabilities = []
+
+    if analyse:
+        sss = analyse.category.values('result')
+        df = json_normalize(sss, record_path='result')
+
+        df_country = df['country']
+        countries = list(set(df_country))
+        countries = list(filter(None, countries))
+        countries.sort(key=str.lower)
+
+        country_choices = [(None, _('Global'))] + list(enumerate(x for x in countries))
+
+        class CountryForm(forms.Form):
+            country = forms.ChoiceField(choices=country_choices, required=True)
+
+        country_form = CountryForm
+
+        if 'country' in request.GET:
+            country_groups = OrderedDict()
+            country_dict = dict(country_choices)
+            if int(request.GET['country']) in country_dict:
+                form_country = country_dict[int(request.GET['country'])]
+                items = analyse.category.filter(result__contains=[{'country':form_country}]).values('result')
+                df = json_normalize(items, record_path='result')
+
+        result = df
+        web_privacy, google_group = queries.web_privacy_results(result)
+
+    return render(request, 'frontend/web_privacy_dashboard.html', {
+        'web_privacy': web_privacy,
+        'google_group': google_group,
+        'last_analysis': analyse.end,
+        'country_form': country_form
     })

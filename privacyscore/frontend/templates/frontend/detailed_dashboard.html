@@ -1,0 +1,108 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block content %}
+    <div class="row dashboard">
+        <div class="col-md-12">
+            <h2>
+                {{ "Detailed Dashboard" }}
+            </h2>
+            <div id="container_bar"></div>
+			<script src="https://code.highcharts.com/highcharts.js"></script>
+			<script src="https://code.highcharts.com/modules/exporting.js"></script>
+			<script type="text/javascript">
+				var container_bar = document.getElementById("container_bar");
+                {% for group, val in country_detailed_list.items %}
+					container_bar.innerHTML += '<h2>{{ group }}</h2>';
+					{% for chk, country, per, good, neutral, total in val %}
+	                    container_bar.innerHTML += '<div class="col-md-4" id="{{ group }}-{{ forloop.counter }}" style="min-width: 310px; max-width: 600px; height: 400px; margin: 0 auto"></div>';
+					{% endfor %}
+                	container_bar.innerHTML += '<hr>';
+                {% endfor %}
+                {% for group, val in country_detailed_list.items %}
+					{% for chk, country, per, good, neutral, total in val %}
+						var container_bar = document.getElementById("{{ group }}-{{ forloop.counter }}");
+						Highcharts.chart(container_bar, {
+						    colors: ['#95c600', '#f8af11', '#e00000'],
+						    chart: {
+						        type: 'column'
+						    },
+						    title: {
+						        text: "{{ chk|safe }}"
+						    },
+						    xAxis: {
+						        categories: {{ country|safe }}
+						    },
+						    yAxis:
+							    [
+							    { // Main Axis
+									min: 0,
+									max: 100,
+									tickInterval: 10,
+									title: {
+								        text: 'Percentage'
+									}
+								}
+								// { // Secondary Axis
+								// 	min: 0,
+						  //           tickInterval:1000,
+						  //           opposite: true
+								// }
+								],
+						    //{
+						    //    min: 0,
+						    //    max: 100,
+						    //    tickInterval: 10,
+						    //    title: {
+						    //        text: 'Percentage'
+						    //    }
+						    //}
+						    legend: {
+						        reversed: true
+						    },
+						    plotOptions: {
+						        //series: {
+						        //    stacking: 'normal'
+						        //}
+						    },
+						    credits: {
+						        enabled: false
+						    },
+						    exporting: {
+						        enabled: false
+						    },
+						    series: [{
+								yAxis: 0,
+						    	stacking: 'normal',
+						        name: 'Passed',
+						        data: {{ good|safe }}
+						    },
+							{
+						        yAxis: 0,
+						        stacking: 'normal',
+						        name: 'Neutral',
+						        data: {{ neutral|safe }}
+						    },
+						    {
+						        yAxis: 0,
+						        stacking: 'normal',
+						        name: 'Failed',
+						        data: {{ per|safe }}
+						    }
+						    // {
+						    //     yAxis: 1,
+						    //     type: 'spline',
+						    //     color: 'green',
+						    //     name: 'Total Websites',
+						    //     data: {{ total|safe }}
+						    // }
+						    ]
+						});
+					{% endfor %}
+                {% endfor %}
+			</script>
+		</div>
+    </div>
+{% endblock content %}

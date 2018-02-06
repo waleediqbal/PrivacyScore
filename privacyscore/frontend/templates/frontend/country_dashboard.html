@@ -104,27 +104,33 @@
 						        min: 0,
 						        max: 100,
 						        title: {
-						            text: 'Percentage',
-						            align: 'high'
+						            text: 'Percentage'
 						        },
 						        labels: {
 						            overflow: 'justify'
 						        }
 						    },
 						    tooltip: {
-						        valueSuffix: ''
+						        valueSuffix: '',
+						        enabled: true,
+						        formatter: function() {
+									return this.x + ': ' + "<b>" + this.y + "</b>";
+						        }
 						    },
 						    plotOptions: {
 						        bar: {
 						            dataLabels: {
-						                enabled: true
-						            }
+						                enabled: true,
+						                crop: false,
+						                allowOverlap: true
+						            },
+						            pointWidth: 20
 						        }
 						    },
-						    tooltip: {
-					            enabled: false
-					        },
 						    credits: {
+						        enabled: false
+						    },
+						    exporting: {
 						        enabled: false
 						    },
 						    series: [{

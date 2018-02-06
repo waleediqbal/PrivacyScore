@@ -1,0 +1,310 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block content %}
+    <div class="row dashboard">
+        <div class="col-md-12">
+            <h2>
+                {{ "Mail Security Dashboard" }}
+            </h2>
+            <form method="get">
+                <input type="hidden" name="configure" value="">
+                <div class="form-group">
+                    {{ country_form }}
+                    <button class="btn btn-primary">{% trans "Submit" %}</button>
+                </div>
+            </form>
+            <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+			<script src="http://code.highcharts.com/highcharts.js"></script>
+			<script src="http://code.highcharts.com/highcharts-more.js"></script>
+
+            <script src="http://code.highcharts.com/maps/modules/map.js"></script>
+            <script src="http://code.highcharts.com/maps/modules/data.js"></script>
+			<script src="http://code.highcharts.com/mapdata/custom/world-highres.js"></script>
+
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+
+            <div class="col-md-6 panel panel-default" style="padding:0px;height:400px; width:49%; float:left; margin-right: 1%;">
+                <div class="panel panel-info">
+                    <div class="panel-heading"><h3>Last analysis report generated </h3></div>
+                    <div class="panel-body"><h4>{{ last_analysis }}</h4></div>
+                </div>
+                <div id="mx_enc_container" width="300px" height="230px!important">
+                    <div class="col-md-7"><canvas id="mx_enc" width="300px" height="230px!important"></canvas></div>
+                    <div class="col-md-5">
+                        <h4>The remaining results on this page will only consider the percentage of mail servers supporting encryption.</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 panel-default panel" style="height: 400px; width:49%; float:left; margin-left: 1%;">
+                <div class="text-center panel-heading"><h3>SSL/TLS Support</h3></div>
+                <div id="tls_container" style="min-width: 310px; height: 330px; margin: 0 auto">
+                </div>
+                <p align="center"></p>
+            </div>
+            <div class="col-md-12 panel panel-default" style="height: 430px; width:100%; float:left; margin-right: 1%;">
+                <div class="text-center panel-heading"><h3>Protection Against Various Attacks</h3></div>
+                <div id="vul_container" style="min-width: 310px; height: 350px; margin: 0 auto">
+                </div>
+                <p align="center"></p>
+            </div>
+            <div class="col-md-12 panel panel-default">
+                <div class="text-center panel-heading"><h3>Mail Servers Distribution Around The World</h3></div>
+                <div id="map_container">
+                </div>
+            </div>
+            <script>
+                window.onload = function () {
+                    Chart.pluginService.register({
+                        beforeDraw: function (chart) {
+                            var width = chart.chart.width,
+                                height = chart.chart.height,
+                                ctx = chart.chart.ctx;
+                            ctx.restore();
+                            var fontSize = (height / 120).toFixed(2);
+                            ctx.font = fontSize + "em sans-serif";
+                            ctx.textBaseline = "middle";
+                            var text = chart.config.options.elements.center.text,
+                                textX = Math.round((width - ctx.measureText(text).width) / 2),
+                                textY = height / 2.2;
+                            ctx.fillText(text, textX, textY);
+                            ctx.save();
+                        }
+                    });
+                    var ctx = document.getElementById("mx_enc");
+                    var data = {
+                      labels: {{mx_enc_support.1|safe}},
+                      datasets: [
+                        {
+                          data: {{mx_enc_support.2|safe}},
+                          backgroundColor: [
+                            "#e00000",
+                            "#95c600"
+                          ],
+                          hoverBackgroundColor: [
+                            "#e00000",
+                            "#95c600"
+                          ]
+                        }]
+                    };
+                    var chart = new Chart(ctx, {
+                      type: 'doughnut',
+                      data: data,
+                      options: {
+                        responsive: true,
+                        elements: {
+                            center: {
+                                text: {{ mx_enc_support.3|safe }} + '%'
+                            }
+                        },
+                        tooltips: {
+                            callbacks: {
+                                title: function(tooltipItem, data) {
+                                    return data['labels'][tooltipItem[0]['index']];
+                                },
+                                // label: function(tooltipItem, data) {
+                                //  var value = data.datasets[0].data[tooltipItem.index];
+                                //  return " " + value + " %";
+                                // }
+                                label: function(tooltipItem, data) {
+                                  //get the concerned dataset
+                                  var dataset = data.datasets[tooltipItem.datasetIndex];
+                                  //calculate the total of this data set
+                                  var total = dataset.data.reduce(function(previousValue, currentValue, currentIndex, array) {
+                                    return previousValue + currentValue;
+                                  });
+                                  //get the current items value
+                                  var currentValue = dataset.data[tooltipItem.index];
+                                  //calculate the precentage based on the total and current item, also this does a rough rounding to give a whole number
+                                  var percentage =  (((currentValue/total) * 100)).toFixed(1) ;
+                                  var value = data.datasets[0].data[tooltipItem.index];
+
+                                  return " " +  percentage + " % (" + value + " servers)";
+                                }
+                              },
+                        },
+                        legend: {
+                          display: false
+                        },
+                        title: {
+                            display: true,
+                            position: "bottom",
+                            fontSize: 14,
+                            text: "{{ mx_enc_support.0|safe }}"
+                        }
+                      }
+                    });
+
+                    var container_bar = document.getElementById("tls_container");
+                    Highcharts.chart(container_bar, {
+                        colors: ['#e00000', '#95c600'],
+                        chart: {
+                            type: 'column'
+                        },
+                        title: {
+                            text: ""
+                        },
+                        xAxis: {
+                            categories: {{ tls_group.0|safe }},
+                            labels: {
+                                style: {
+                                    fontSize:'15px'
+                                }
+                            }
+                        },
+                        yAxis:
+                        {
+                            min: 0,
+                            max: 100,
+                            tickInterval: 20,
+                            title: {
+                                text: 'Percentage'
+                            },
+                            labels: {
+                                style: {
+                                    fontSize:'15px'
+                                }
+                            }
+                        },
+                        legend: {
+                            reversed: true
+                        },
+                        plotOptions: {
+                            series: {
+                                stacking: 'percent'
+                            }
+                        },
+                        credits: {
+                            enabled: false
+                        },
+                        exporting: {
+                            enabled: false
+                        },
+                        tooltip: {
+                            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b>({point.percentage:.0f}%)<br/>',
+                            footerFormat: 'Total: <b>{point.total}</b>',
+                            shared: true
+                        },
+                        series: [
+                            {
+                                name: 'Not supported',
+                                data: {{ tls_group.2|safe }}
+                            },
+                            {
+                                name: 'Supported',
+                                data: {{ tls_group.1|safe }}
+                            }
+                        ]
+                    });
+                    var container_bar = document.getElementById("vul_container");
+                    Highcharts.chart(container_bar, {
+                        colors: ['#e00000', '#95c600'],
+                        chart: {
+                            type: 'column'
+                        },
+                        title: {
+                            text: ""
+                        },
+                        xAxis: {
+                            categories: {{ vul_group.0|safe }},
+                            labels: {
+                                style: {
+                                    fontSize:'15px'
+                                }
+                            }
+                        },
+                        yAxis:
+                        {
+                            min: 0,
+                            max: 100,
+                            tickInterval: 20,
+                            title: {
+                                text: 'Percentage'
+                            },
+                            labels: {
+                                style: {
+                                    fontSize:'15px'
+                                }
+                            }
+                        },
+                        legend: {
+                            reversed: true
+                        },
+                        plotOptions: {
+                            series: {
+                                stacking: 'percent'
+                            }
+                        },
+                        credits: {
+                            enabled: false
+                        },
+                        exporting: {
+                            enabled: false
+                        },
+                        tooltip: {
+                            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b>({point.percentage:.0f}%)<br/>',
+                            footerFormat: 'Total: <b>{point.total}</b>',
+                            shared: true
+                        },
+                        series: [
+                            {
+                                name: 'Vulnerable',
+                                data: {{ vul_group.2|safe }}
+                            },
+                            {
+                                name: 'Protected',
+                                data: {{ vul_group.1|safe }}
+                            }
+                        ]
+                    });
+                    var ctx = document.getElementById("map_container");
+                    var data = {{ country_json|safe }};
+                    Highcharts.mapChart(ctx, {
+                        chart: {
+                            // borderWidth: 1,
+                            borderColor: '#e5e5e5',
+                            map: 'custom/world-highres'
+                        },
+                        title: {
+                            text: ''
+                        },
+                        subtitle: {
+                            text: ''
+                        },
+                        mapNavigation: {
+                            enabled: true,
+                            buttonOptions: {
+                                verticalAlign: 'bottom'
+                            }
+                        },
+                        credits: {
+                            enabled: false
+                        },
+                        legend: {
+                            display: true
+                        },
+                        series: [{
+                            name: 'Countries',
+                            color: '#E0E0E0',
+                            enableMouseTracking: false
+                        }, {
+                            type: 'mapbubble',
+                            name: 'Percentage of servers',
+                            joinBy: ['iso-a2', 'code'],
+                            data: data,
+                            color: '#95c600',
+                            minSize: 4,
+                            maxSize: '12%',
+                            tooltip: {
+                                pointFormat: '{point.mx_country}: {point.z}%'
+                            }
+                        }]
+                    });
+                }
+            </script>
+        </div>
+    </div>
+{% endblock %}

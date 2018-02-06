@@ -1,0 +1,205 @@
+{% extends 'frontend/base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block content %}
+    <div class="row dashboard">
+        <div class="col-md-12">
+            <h2>
+                {{ "Web Privacy Dashboard" }}
+            </h2>
+            <form method="get">
+                <input type="hidden" name="configure" value="">
+                <div class="form-group">
+                    {{ country_form }}
+                    <button class="btn btn-primary">{% trans "Submit" %}</button>
+                </div>
+            </form>
+            <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+			<script src="http://code.highcharts.com/highcharts.js"></script>
+			<script src="http://code.highcharts.com/highcharts-more.js"></script>
+
+            <script src="http://code.highcharts.com/maps/modules/map.js"></script>
+            <script src="http://code.highcharts.com/maps/modules/data.js"></script>
+			<script src="http://code.highcharts.com/mapdata/custom/world-highres.js"></script>
+
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+
+            <div class="col-md-12 panel panel-default" style="height: 620px; width:100%; float:left; margin-right: 1%;">
+                <div class="text-center panel-heading"><h3>Privacy Checks</h3></div>
+                <div id="tracking_container" style="padding: 10px; min-width: 310px; height: 350px; margin: 0 auto">
+                    <div id="tracking_inner"></div>
+                </div>
+            </div>
+<!--             <div class="col-md-12 panel panel-default" style="height: 360px; width:100%; float:left; margin-right: 1%;">
+                <div class="text-center panel-heading"><h3>Google Analytics Checks</h3></div>
+                <div id="google_inner" style="padding: 10px; min-width: 310px; height: 350px; margin: 0 auto">
+                </div>
+            </div> -->
+            <script>
+                window.onload = function () {
+                    Chart.pluginService.register({
+                        beforeDraw: function (chart) {
+                            var width = chart.chart.width,
+                                height = chart.chart.height,
+                                ctx = chart.chart.ctx;
+                            ctx.restore();
+                            var fontSize = (height / 120).toFixed(2);
+                            ctx.font = fontSize + "em sans-serif";
+                            ctx.textBaseline = "middle";
+                            var text = chart.config.options.elements.center.text,
+                                textX = Math.round((width - ctx.measureText(text).width) / 2),
+                                textY = height / 2.2;
+                            ctx.fillText(text, textX, textY);
+                            ctx.save();
+                        }
+                    });
+                    var container = document.getElementById("tracking_inner");
+                    {% for group, val in web_privacy.items %}
+                        {% if 'privacy extension' in group %}
+                            container.innerHTML += '<div class="col-md-3"><canvas id="{{ group }}" width="400px!important" height="400px"></canvas><h4>Only considering sites using Google Analytics</h4></div>';
+                        {% else %}
+                            container.innerHTML += '<div class="col-md-3"><canvas id="{{ group }}" width="400px!important" height="400px"></canvas></div>';
+                        {% endif %}
+                    {% endfor %}
+                    {% for group, val in web_privacy.items %}
+                        var ctx = document.getElementById("{{ group }}");
+                        var data = {
+                          labels: {{val.0|safe}},
+                          datasets: [
+                            {
+                              data: {{val.1|safe}},
+                              backgroundColor: [
+                                "#e00000",
+                                "#95c600"
+                              ],
+                              hoverBackgroundColor: [
+                                "#e00000",
+                                "#95c600"]
+                            }]
+                        };
+
+                        var chart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: data,
+                            options: {
+                                responsive: true,
+                                elements: {
+                                center: {
+                                    text: {{ val.2|safe }} + '%'
+                                    }
+                                },
+                                tooltips: {
+                                    callbacks: {
+                                        title: function(tooltipItem, data) {
+                                            return data['labels'][tooltipItem[0]['index']];
+                                        },
+                                     //    label: function(tooltipItem, data) {
+                                     //     var value = data.datasets[0].data[tooltipItem.index];
+                                     //     return " " + value + " %";
+                                        // }
+                                        label: function(tooltipItem, data) {
+                                  //get the concerned dataset
+                                  var dataset = data.datasets[tooltipItem.datasetIndex];
+                                  //calculate the total of this data set
+                                  var total = dataset.data.reduce(function(previousValue, currentValue, currentIndex, array) {
+                                    return previousValue + currentValue;
+                                  });
+                                  //get the current items value
+                                  var currentValue = dataset.data[tooltipItem.index];
+                                  //calculate the precentage based on the total and current item, also this does a rough rounding to give a whole number
+                                  var percentage =  (((currentValue/total) * 100)).toFixed(1) ;
+                                  var value = data.datasets[0].data[tooltipItem.index];
+
+                                  return " " +  percentage + " % (" + value + " sites)";
+                                }
+                                    },
+                                },
+                                legend: {
+                                  display: false
+                                },
+                                title: {
+                                    display: true,
+                                    position: "bottom",
+                                    fontSize: 14,
+                                    text: "{{ group|safe }}"
+                                }
+                            }
+                        });
+                    {% endfor %}
+                    // var container = document.getElementById("google_inner");
+                    // {% for group, val in google_group.items %}
+                    //     container.innerHTML += '<div class="col-md-3"><canvas id="{{ group }}" width="400px!important" height="400px"></canvas></div>';
+                    // {% endfor %}
+                    // {% for group, val in google_group.items %}
+                    //     var ctx = document.getElementById("{{ group }}");
+                    //     var data = {
+                    //       labels: {{val.0|safe}},
+                    //       datasets: [
+                    //         {
+                    //           data: {{val.1|safe}},
+                    //           backgroundColor: [
+                    //             "#e00000",
+                    //             "#95c600"
+                    //           ],
+                    //           hoverBackgroundColor: [
+                    //             "#e00000",
+                    //             "#95c600"]
+                    //         }]
+                    //     };
+
+                    //     var chart = new Chart(ctx, {
+                    //         type: 'doughnut',
+                    //         data: data,
+                    //         options: {
+                    //             responsive: true,
+                    //             elements: {
+                    //             center: {
+                    //                 text: {{ val.2|safe }} + '%'
+                    //                 }
+                    //             },
+                    //             tooltips: {
+                    //                 callbacks: {
+                    //                     title: function(tooltipItem, data) {
+                    //                         return data['labels'][tooltipItem[0]['index']];
+                    //                     },
+                    //                  //    label: function(tooltipItem, data) {
+                    //                  //     var value = data.datasets[0].data[tooltipItem.index];
+                    //                  //     return " " + value + " %";
+                    //                     // }
+                    //                     label: function(tooltipItem, data) {
+                    //               //get the concerned dataset
+                    //               var dataset = data.datasets[tooltipItem.datasetIndex];
+                    //               //calculate the total of this data set
+                    //               var total = dataset.data.reduce(function(previousValue, currentValue, currentIndex, array) {
+                    //                 return previousValue + currentValue;
+                    //               });
+                    //               //get the current items value
+                    //               var currentValue = dataset.data[tooltipItem.index];
+                    //               //calculate the precentage based on the total and current item, also this does a rough rounding to give a whole number
+                    //               var percentage =  (((currentValue/total) * 100)).toFixed(1) ;
+                    //               var value = data.datasets[0].data[tooltipItem.index];
+
+                    //               return " " +  percentage + " % (" + value + " sites)";
+                    //             }
+                    //                 },
+                    //             },
+                    //             legend: {
+                    //               display: false
+                    //             },
+                    //             title: {
+                    //                 display: true,
+                    //                 position: "bottom",
+                    //                 fontSize: 14,
+                    //                 text: "{{ group|safe }}"
+                    //             }
+                    //         }
+                    //     });
+                    {% endfor %}
+                }
+            </script>
+        </div>
+    </div>
+{% endblock %}

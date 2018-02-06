@@ -44,4 +44,8 @@ urlpatterns = [
     url(r'^analyse/$', views.analyse, name='analyse'),
     url(r'^dashboard/$', views.dashboard, name='dashboard'),
     url(r'^country_dashboard/$', views.country_dashboard, name='country_dashboard'),
+    url(r'^detailed_dashboard/$', views.detailed_dashboard, name='detailed_dashboard'),
+    url(r'^enc_web_dashboard/$', views.enc_web_dashboard, name='enc_web_dashboard'),
+    url(r'^enc_mail_dashboard/$', views.enc_mail_dashboard, name='enc_mail_dashboard'),
+    url(r'^web_privacy_dashboard/$', views.web_privacy_dashboard, name='web_privacy_dashboard'),
 ]
