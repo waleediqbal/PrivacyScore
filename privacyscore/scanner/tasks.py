@@ -183,8 +183,8 @@ def schedule_pre_processing(obj_id = int):
                 data = []
                 site_data = {}
                 site_data['url']        = site.url
-                site_data['country']    = site.last_scan__result['a_locations'][0] if site.last_scan__result['a_locations'] else None
-                site_data['mx_country'] = site.last_scan__result['mx_locations'][0] if site.last_scan__result['mx_locations'] else None
+                site_data['country']    = site.last_scan__result['a_locations'][0] if 'a_locations' in site.last_scan__result else None
+                site_data['mx_country'] = site.last_scan__result['mx_locations'][0] if 'mx_locations' in site.last_scan__result else None
                 for group, result in zip(RESULT_GROUPS.values(), analysis):
                     for description, title, rating in result[1]:
                         site_data[title] = str(rating)
