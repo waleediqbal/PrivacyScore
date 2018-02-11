@@ -167,9 +167,9 @@ def schedule_pre_processing(obj_id = int):
     analyse.start = timezone.now()
     analyse.save()
     #sites = Site.objects.order_by('-id')
-    scan_list = get_object_or_404(ScanList.objects.prefetch_columns(), pk=121)
+    scan_list = ScanList.objects.filter(id=121).prefetch_columns()
     if scan_list:
-        sites = scan_list.sites.annotate_most_recent_scan_result().select_related('last_scan')
+        sites = scan_list.first().sites.prefetch_column_values(scan_list).select_related('last_scan')
         analysis = []
 
         for site in sites:
