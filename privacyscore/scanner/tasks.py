@@ -173,7 +173,7 @@ def schedule_pre_processing(obj_id = int):
         analysis = []
 
         for site in sites:
-            if site.last_scan__result:
+            if site.last_scan:
                 analysis = site.analyse(DEFAULT_GROUP_ORDER)[1].items()
             else:
                 analysis =  None
