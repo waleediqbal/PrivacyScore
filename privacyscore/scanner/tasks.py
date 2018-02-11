@@ -166,15 +166,13 @@ def schedule_pre_processing(obj_id = int):
     analyse = Analysis.objects.get(id=obj_id)
     analyse.start = timezone.now()
     analyse.save()
-    sites = Site.objects.order_by('-id')
-    if sites:
-        scan_results = sites.annotate_most_recent_scan_error_count() \
-            .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
-            .annotate_most_recent_scan_result() \
-            .select_related('last_scan')
+    #sites = Site.objects.order_by('-id')
+    scan_list = get_object_or_404(ScanList.objects.prefetch_columns(), pk=121)
+    if scan_list:
+        sites = scan_list.sites.annotate_most_recent_scan_result().select_related('last_scan')
         analysis = []
 
-        for site in scan_results:
+        for site in sites:
             if site.last_scan__result:
                 analysis = site.analyse(DEFAULT_GROUP_ORDER)[1].items()
             else:
