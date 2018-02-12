@@ -160,7 +160,7 @@ def _parse_new_results(previous_results: List[Tuple[list, dict]]) -> tuple:
             errors.append(e)
     return raw, result, errors
 
-@shared_task(queue='master', time_limit=25)
+@shared_task(queue='master', time_limit=1500)
 def schedule_pre_processing(obj_id = int):
 
     analyse = Analysis.objects.get(id=obj_id)
