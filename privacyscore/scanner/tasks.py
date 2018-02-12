@@ -166,35 +166,35 @@ def schedule_pre_processing(obj_id = int):
     analyse = Analysis.objects.get(id=obj_id)
     analyse.start = timezone.now()
     analyse.save()
-    #sites = Site.objects.order_by('-id')
-    scan_list = ScanList.objects.filter(id=121).prefetch_columns()
-    if scan_list:
-        sites = scan_list.first().sites.prefetch_column_values(scan_list).annotate_most_recent_scan_result().select_related('last_scan')
-        analysis = []
-        if sites:
-            tasks = group(process_site.s(site.last_scan__result, site.id, analyse.id) for site in sites)
-            tasks.apply_async()
+    sites = Site.objects.order_by('-id')[:500]
+    if sites:
+        scan_results = sites.annotate_most_recent_scan_error_count() \
+            .annotate_most_recent_scan_start().annotate_most_recent_scan_end_or_null() \
+            .annotate_most_recent_scan_result() \
+            .select_related('last_scan')
 
+        group_json = {}
+        analysis = []
+
+        g = group(process_site.s(site.last_scan__result, site.id, analyse.id) for site in scan_results)
+        g.apply_async()
         analyse.end = timezone.now()
         analyse.save()
 
 @shared_task(queue='slave')
 def process_site(site_res: [], site_pk: int, analyse_id: int):
     site = Site.objects.get(pk=site_pk)
+    #if site.last_scan__result:
     if site_res:
         analysis = site.analyse(site_res, DEFAULT_GROUP_ORDER)[1].items()
+        #else:
+        #    analysis = None
         if analysis:
             data = []
             site_data = {}
-            site_data['url'] = site.url
-            if 'a_locations' in site_res:
-                site_data['country'] = site_res['a_locations'][0] if site_res['a_locations'] in site_res else None
-            else:
-                site_data['country'] = None
-            if 'mx_locations' in site_res:
-                site_data['mx_country'] = site_res['mx_locations'][0] if site_res['mx_locations'] in site_res else None
-            else:
-                site_data['mx_country'] = None
+            site_data['url']        = site.url
+            site_data['country']    = site_res['a_locations'] if 'a_locations' in site_res else None
+            site_data['mx_country'] = site_res['mx_locations'] if 'mx_locations' in site_res else None
             for group, result in zip(RESULT_GROUPS.values(), analysis):
                 for description, title, rating in result[1]:
                     site_data[title] = str(rating)
