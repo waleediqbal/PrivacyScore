@@ -314,12 +314,10 @@ class Site(models.Model):
 
         return evaluate_result(self.last_scan__result, group_order)
 
-    def analyse(self, group_order: list):
-        if not self.last_scan__result:
-            return None
+    def analyse(self, result: dict, group_order: list):
         from privacyscore.analysis.categorize import categorize_result
 
-        return categorize_result(self.last_scan__result, group_order)
+        return categorize_result(result, group_order)
 
 
 class ListTagQuerySet(models.QuerySet):

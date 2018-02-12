@@ -6,7 +6,7 @@ import pandas as pd
 from typing import List, Tuple
 from socket import getfqdn
 
-from celery import chord, shared_task
+from celery import chord, shared_task, group
 from django.conf import settings
 from django.utils import timezone
 
@@ -171,25 +171,34 @@ def schedule_pre_processing(obj_id = int):
     if scan_list:
         sites = scan_list.first().sites.prefetch_column_values(scan_list).annotate_most_recent_scan_result().select_related('last_scan')
         analysis = []
-
-        for site in sites:
-            if site.last_scan:
-                analysis = site.analyse(DEFAULT_GROUP_ORDER)[1].items()
-            else:
-                analysis =  None
-            if analysis:
-                data = []
-                site_data = {}
-                site_data['url']        = site.url
-                site_data['country']    = site.last_scan__result['a_locations'][0] if 'a_locations' in site.last_scan__result else None
-                site_data['mx_country'] = site.last_scan__result['mx_locations'][0] if 'mx_locations' in site.last_scan__result else None
-                for group, result in zip(RESULT_GROUPS.values(), analysis):
-                    for description, title, rating in result[1]:
-                        site_data[title] = str(rating)
-                data.append(site_data)
-                AnalysisCategory.objects.create(
-                    analysis_id=analyse.id,
-                    result=data)
+        if sites:
+            tasks = group(process_site.s(site.last_scan__result, site.id, analyse.id) for site in scan_results)
+            tasks.apply_async()
 
         analyse.end = timezone.now()
         analyse.save()
+
+@shared_task(queue='slave')
+def process_site(site_res: [], site_pk: int, analyse_id: int):
+    site = Site.objects.get(pk=site_pk)
+    if site_res:
+        analysis = site.analyse(site_res, DEFAULT_GROUP_ORDER)[1].items()
+        if analysis:
+            data = []
+            site_data = {}
+            site_data['url'] = site.url
+            if 'a_locations' in site_res:
+                site_data['country'] = site_res['a_locations'][0] if site_res['a_locations'] in site_res else None
+            else:
+                site_data['country'] = None
+            if 'mx_locations' in site_res:
+                site_data['mx_country'] = site_res['mx_locations'][0] if site_res['mx_locations'] in site_res else None
+            else:
+                site_data['mx_country'] = None
+            for group, result in zip(RESULT_GROUPS.values(), analysis):
+                for description, title, rating in result[1]:
+                    site_data[title] = str(rating)
+            data.append(site_data)
+            AnalysisCategory.objects.create(
+                analysis_id=analyse_id,
+                result=data)
