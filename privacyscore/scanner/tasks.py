@@ -172,7 +172,7 @@ def schedule_pre_processing(obj_id = int):
         sites = scan_list.first().sites.prefetch_column_values(scan_list).annotate_most_recent_scan_result().select_related('last_scan')
         analysis = []
         if sites:
-            tasks = group(process_site.s(site.last_scan__result, site.id, analyse.id) for site in scan_results)
+            tasks = group(process_site.s(site.last_scan__result, site.id, analyse.id) for site in sites)
             tasks.apply_async()
 
         analyse.end = timezone.now()
