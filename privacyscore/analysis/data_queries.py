@@ -667,3 +667,59 @@ def web_privacy_results(myList = []) -> OrderedDict:
 	security_checks = ['Unintentional information leaks']
 
 	return privacy_groups, google_group
+
+def association(myList = []):
+	df = myList
+	df = df.drop('url', axis=1)
+	df = df.drop('country', axis=1)
+	df = df.drop('mx_country', axis=1)
+	df = df.replace('None', '0')
+
+	input_assoc_rules = df
+
+	domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
+	data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
+	data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
+	min_support = 0.01
+	print("num of required transactions = ", int(input_assoc_rules.shape[0]*min_support))
+	num_trans = input_assoc_rules.shape[0]*min_support
+	itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
+
+	confidence = 1.0
+
+	rules_df = pd.DataFrame()
+	if len(itemsets) < 1000000:
+		rules = [(P, Q, supp, conf)
+		for P, Q, supp, conf in association_rules(itemsets, confidence)
+			if len(Q) == 1 ]
+		names = {item: '{}={}'.format(var.name, val)
+			for item, var, val in OneHot.decode(mapping, data_gro_1, mapping)}
+		eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
+		N = input_assoc_rules.shape[0] * 0.5
+		rule_stats = list(rules_stats(rules, itemsets, N))
+		rule_list_df = []
+		for ex_rule_frm_rule_stat in rule_stats:
+			ante = ex_rule_frm_rule_stat[0]
+			cons = ex_rule_frm_rule_stat[1]
+			named_cons = names[next(iter(cons))]
+			if named_cons in eligible_ante:
+				rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
+				ante_rule = ', '.join(rule_lhs)
+				if ante_rule and len(rule_lhs)>1 :
+					rule_dict = {'support' : ex_rule_frm_rule_stat[2],
+					             'confidence' : ex_rule_frm_rule_stat[3],
+				                 'coverage' : ex_rule_frm_rule_stat[4],
+				                 'strength' : ex_rule_frm_rule_stat[5],
+				                 'lift' : ex_rule_frm_rule_stat[6],
+				                 'leverage' : ex_rule_frm_rule_stat[7],
+				                 'antecedent': ante_rule,
+				                 'consequent':named_cons }
+					rule_list_df.append(rule_dict)
+		rules_df = pd.DataFrame(rule_list_df)
+		print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
+		if not rules_df.empty:
+			pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
+			result = pruned_rules_df[['antecedent','consequent', 'support','confidence','lift']].groupby('support').max().reset_index().sort_values(['support','confidence'], ascending=False)
+			print(result.to_csv(sep=' ', index=False, header=False))
+		else:
+			print("Unable to generate any rule")
