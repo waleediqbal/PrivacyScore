@@ -179,8 +179,10 @@ def schedule_pre_processing(obj_id = int):
         analyse.save()
 
 @shared_task(queue='slave')
-def process_site(site_res: [], site_pk: int, analyse_id: int):
+def process_site(site_pk: int, analyse_id: int):
     site = Site.objects.get(pk=site_pk)
+    scan_result = ScanResult.objects.get(scan_id=site.last_scan_id)
+    site_res = scan_result.result
     if site_res:
         analysis = site.analyse(site_res, DEFAULT_GROUP_ORDER)[1].items()
         if analysis:
