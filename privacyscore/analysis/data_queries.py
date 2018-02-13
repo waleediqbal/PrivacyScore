@@ -685,7 +685,7 @@ def association(myList = []):
 	num_trans = input_assoc_rules.shape[0]*min_support
 	itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
 
-	confidence = 1.0
+	confidence = 0.6
 
 	rules_df = pd.DataFrame()
 	if len(itemsets) < 1000000:
