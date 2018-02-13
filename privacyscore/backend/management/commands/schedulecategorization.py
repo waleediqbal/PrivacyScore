@@ -4,7 +4,7 @@ from time import sleep
 from django.core.management import BaseCommand
 from django.utils import timezone
 
-from privacyscore.backend.models import Site, Analysis
+from privacyscore.backend.models import Site, Analysis, ScanList
 from privacyscore.utils import normalize_url
 from privacyscore.scanner.tasks import process_site
 
