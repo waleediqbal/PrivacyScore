@@ -220,15 +220,13 @@ CHECKS['ssl']['no_https_by_default_but_same_content_via_https'] = {
     'missing': None,
 }
 # Check if server cert is valid
+# None if no support for HTTPS
 CHECKS['ssl']['web_cert'] = {
     'keys': {'web_has_ssl', 'web_cert_trusted', 'web_cert_trusted_reason'},
     'rating': lambda **keys: {
         'description': _('The website uses a valid security certificate.'),
         'classification': 1,
-    } if keys['web_has_ssl'] and keys['web_cert_trusted'] else {
-        'description': _('Not checking SSL certificate, as the server does not offer SSL'),
-        'classification': 2,
-    } if not keys['web_has_ssl'] else {
+    } if keys['web_has_ssl'] and keys['web_cert_trusted'] else None if not keys['web_has_ssl'] else {
         'description': _('Server uses an invalid SSL certificate.'),
         'classification': 0,
     },
@@ -248,15 +246,13 @@ CHECKS['ssl']['site_redirects_to_https'] = {
     'missing': None
 }
 # Check if website explicitly redirected us from HTTPS to the HTTP version
+# None if no support for HTTPS
 CHECKS['ssl']['redirects_from_https_to_http'] = {
     'keys': {'final_https_url', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The web server redirects to HTTP if content is requested via HTTPS.'),
         'classification': 0,
-    } if (keys['final_https_url'] and keys['final_https_url'].startswith('http:')) else {
-        'description': _('Not checking for HTTPS->HTTP redirection, as the server does not offer HTTPS.'),
-        'classification': 2,
-    } if not keys['web_has_ssl'] else {
+    } if (keys['final_https_url'] and keys['final_https_url'].startswith('http:')) else None if not keys['web_has_ssl'] else {
         'description': _('The web server does not redirect to HTTP if content is requested via HTTPS'),
         'classification': 1,
     },
@@ -277,10 +273,7 @@ CHECKS['ssl']['web_pfs'] = {
 # Checks for HSTS Preload header
 CHECKS['ssl']['web_hsts_header'] = {
     'keys': {'web_has_hsts_preload_header', 'web_has_hsts_header', 'web_has_hsts_preload', 'web_has_ssl'},
-    'rating': lambda **keys: {
-        'description': _("Not checking for HSTS support, as the server does not offer HTTPS."),
-        'classification': 2,
-    } if not keys['web_has_ssl'] else {
+    'rating': lambda **keys: None if not keys['web_has_ssl'] else {
         'description': _('The server uses HSTS to prevent insecure requests.'),
         'classification': 1,
     } if keys['web_has_hsts_header'] or keys['web_has_hsts_preload'] else {
@@ -292,19 +285,13 @@ CHECKS['ssl']['web_hsts_header'] = {
 # Checks for HSTS Preload header duration
 CHECKS['ssl']['web_hsts_header_duration'] = {
     'keys': {'web_has_hsts_header', 'web_has_hsts_preload', 'web_has_hsts_header_sufficient_time', 'web_has_ssl'},
-    'rating': lambda **keys: {
-        'description': _("Not checking for HSTS Preloading header duration, as the server does not offer HTTPS."),
-        'classification': 2,
-    } if not keys['web_has_ssl'] else {
+    'rating': lambda **keys: None if not keys['web_has_ssl'] else {
         'description': _('The site uses HSTS with a sufficiently long duration.'),
         'classification': 1,
     } if keys['web_has_hsts_header_sufficient_time'] else {
         'description': _('The validity of the HSTS header is too short.'),
         'classification': 0,
-    } if ((keys['web_has_hsts_header'] or keys['web_has_hsts_preload']) and (not keys['web_has_hsts_header_sufficient_time'])) else {
-        'description': _('The server is not using HSTS, so not checking HSTS validity duration.'),
-        'classification': 2
-    },
+    } if ((keys['web_has_hsts_header'] or keys['web_has_hsts_preload']) and (not keys['web_has_hsts_header_sufficient_time'])) else None,
     'missing': None,
 }
 # Checks for HSTS preloading preparations
@@ -340,10 +327,7 @@ CHECKS['ssl']['web_has_hpkp_header'] = {
     } if keys['web_has_hpkp_header'] else {
         'description': _('The site is not using Public Key Pinning to prevent attackers from using invalid certificates.'),
         'classification': 0,
-    } if keys['web_has_ssl'] else {
-        'description': _('Not checking for HPKP support, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['web_has_ssl'] else None,
     'missing': None,
 }
 # Check for insecure SSLv2 protocol
@@ -426,8 +410,7 @@ CHECKS['ssl']['web_vuln_heartbleed'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the Heartbleed attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('heartbleed')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('heartbleed') else {
         'description': _('The server is secure against the Heartbleed attack.'),
         'classification': 1,
@@ -439,8 +422,7 @@ CHECKS['ssl']['web_vuln_ccs'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the CCS attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('ccs')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('ccs') else {
         'description': _('The server is secure against the CCS attack.'),
         'classification': 1,
@@ -452,8 +434,7 @@ CHECKS['ssl']['web_vuln_ticketbleed'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the Ticketbleed attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('ticketbleed')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('ticketbleed') else {
         'description': _('The server is secure against the Ticketbleed attack.'),
         'classification': 1,
@@ -465,8 +446,7 @@ CHECKS['ssl']['web_vuln_secure_renego'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to a Secure Re-Negotiation attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('secure-renego')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('secure-renego') else {
         'description': _('The server is secure against the Secure Re-Negotiation attack.'),
         'classification': 1,
@@ -478,8 +458,7 @@ CHECKS['ssl']['web_vuln_secure_client_renego'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the Secure Client Re-Negotiation attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('sec_client_renego')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('sec_client_renego') else {
         'description': _('The server is secure against the Secure Client Re-Negotiation attack.'),
         'classification': 1,
@@ -491,8 +470,7 @@ CHECKS['ssl']['web_vuln_crime'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the CRIME attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('crime')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('crime') else {
         'description': _('The server is secure against the CRIME attack.'),
         'classification': 1,
@@ -504,8 +482,7 @@ CHECKS['ssl']['web_vuln_breach'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the BREACH attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('breach')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('breach') else {
         'description': _('The server is secure against the BREACH attack.'),
         'classification': 1,
@@ -517,8 +494,7 @@ CHECKS['ssl']['web_vuln_poodle'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the POODLE attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('poodle_ssl')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('poodle_ssl') else {
         'description': _('The server is secure against the POODLE attack.'),
         'classification': 1,
@@ -530,8 +506,7 @@ CHECKS['ssl']['web_vuln_sweet32'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the SWEET32 attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('sweet32')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('sweet32') else {
         'description': _('The server is secure against the SWEET32 attack.'),
         'classification': 1,
@@ -543,8 +518,7 @@ CHECKS['ssl']['web_vuln_freak'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the FREAK attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('freak')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('freak') else {
         'description': _('The server is secure against the FREAK attack.'),
         'classification': 1,
@@ -568,8 +542,7 @@ CHECKS['ssl']['web_vuln_logjam'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the LOGJAM attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('logjam')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('logjam') else {
         'description': _('The server is secure against the LOGJAM attack.'),
         'classification': 1
@@ -581,8 +554,7 @@ CHECKS['ssl']['web_vuln_beast'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the BEAST attack.'),
-        'classification': 0,
-        'finding': keys["web_vulnerabilities"].get('beast')['finding']
+        'classification': 0
     } if keys["web_vulnerabilities"].get('beast') else {
         'description': _('The server is secure against the BEAST attack.'),
         'classification': 1,
@@ -602,6 +574,7 @@ CHECKS['ssl']['web_vuln_lucky13'] = {
     'missing': None,
 }
 # Check for RC4
+# None if no support for HTTPS
 CHECKS['ssl']['web_vuln_rc4'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
@@ -610,13 +583,11 @@ CHECKS['ssl']['web_vuln_rc4'] = {
     } if keys["web_vulnerabilities"].get('rc4') else {
         'description': _('The server does not support the outdated and insecure RC4 cipher.'),
         'classification': 1
-    } if keys['web_has_ssl'] else {
-        'description': _('Not checking for RC4 cipher support, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['web_has_ssl'] else None,
     'missing': None,
 }
 # Check for Fallback_SCSV support
+# None if no support for HTTPS
 CHECKS['ssl']['web_vuln_fallback_scsv'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'rating': lambda **keys: {
@@ -625,10 +596,7 @@ CHECKS['ssl']['web_vuln_fallback_scsv'] = {
     } if keys["web_vulnerabilities"].get('fallback_scsv') else {
         'description': _('The server uses TLS_FALLBACK_SCSV to prevent downgrade attacks.'),
         'classification': 1
-    } if keys['web_has_ssl'] else {
-        'description': _('Not checking for TLS_FALLBACK_SCSV support, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['web_has_ssl'] else None,
     'missing': None,
 }
 
@@ -720,51 +688,42 @@ CHECKS['mx']['mx_secure_protocols_tls1_2'] = {
     'missing': None,
 }
 # Check for Heartbleed
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_heartbleed'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the Heartbleed attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('heartbleed')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('heartbleed') else {
         'description': _('The server is secure against the Heartbleed attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the Heartbleed vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for CCS
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_ccs'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the CCS attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('ccs')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('ccs') else {
         'description': _('The server is secure against the CCS attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the CCS vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for ticketbleed
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_ticketbleed'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the Ticketbleed attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('ticketbleed')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('ticketbleed') else {
         'description': _('The server is secure against the Ticketbleed attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the Ticketbleed vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for Secure Renegotiation
@@ -772,194 +731,158 @@ CHECKS['mx']['mx_vuln_secure_renego'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to a Secure Re-Negotiation attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('secure-renego')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('secure-renego') else {
         'description': _('The server is secure against the Secure Re-Negotiation attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the Secure Re-Negotiation vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for Secure Client Renego
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_secure_client_renego'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the Secure Client Re-Negotiation attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('sec_client_renego')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('sec_client_renego') else {
         'description': _('The server is secure against the Secure Client Re-Negotiation attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the Secure Client Re-Negotiation vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for CRIME
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_crime'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the CRIME attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('crime')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('crime') else {
         'description': _('The server is secure against the CRIME attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the CRIME vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for BREACH
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_breach'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the BREACH attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('breach')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('breach') else {
         'description': _('The server is secure against the BREACH attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the BREACH vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for POODLE
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_poodle'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the POODLE attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('poodle_ssl')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('poodle_ssl') else {
         'description': _('The server is secure against the POODLE attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the POODLE vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for Sweet32
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_sweet32'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the SWEET32 attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('sweet32')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('sweet32') else {
         'description': _('The server is secure against the SWEET32 attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the SWEET32 vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for FREAK
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_freak'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the FREAK attack.'),
         'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('freak')['finding']
     } if keys["mx_vulnerabilities"].get('freak') else {
         'description': _('The server is secure against the FREAK attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the FREAK vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for DROWN
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_drown'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the DROWN attack.'),
         'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('drown')['finding']
     } if keys["mx_vulnerabilities"].get('drown') else {
         'description': _('The server is secure against the DROWN attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the DROWN vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for LogJam
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_logjam'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the LOGJAM attack.'),
-        'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('logjam')['finding']
+        'classification': 0
     } if keys["mx_vulnerabilities"].get('logjam') else {
         'description': _('The server is secure against the LOGJAM attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the LOGJAM vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for BEAST
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_beast'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the BEAST attack.'),
         'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('beast')['finding']
     } if keys["mx_vulnerabilities"].get('beast') else {
         'description': _('The server is secure against the BEAST attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the BEAST vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for Lucky13
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_lucky13'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server may be vulnerable to the LUCKY13 attack.'),
         'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('lucky13')['finding']
     } if keys["mx_vulnerabilities"].get('lucky13') else {
         'description': _('The server is secure against the LUCKY13 attack.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for the LUCKY13 vulnerability, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for RC4
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_rc4'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
         'description': _('The server supports the outdated and insecure RC4 cipher.'),
         'classification': 0,
-        'finding': keys["mx_vulnerabilities"].get('rc4')['finding']
     } if keys["mx_vulnerabilities"].get('rc4') else {
         'description': _('The server does not support the outdated and insecure RC4 cipher.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for RC4 cipher support, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 # Check for Fallback_SCSV support
+# None if no support for HTTPS
 CHECKS['mx']['mx_vuln_fallback_scsv'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'rating': lambda **keys: {
@@ -968,14 +891,11 @@ CHECKS['mx']['mx_vuln_fallback_scsv'] = {
     } if keys["mx_vulnerabilities"].get('fallback_scsv') else {
         'description': _('The server uses TLS_FALLBACK_SCSV to prevent downgrade attacks.'),
         'classification': 1,
-    } if keys['mx_has_ssl'] else {
-        'description': _('Not checking for TLS_FALLBACK_SCSV support, as the server does not offer HTTPS.'),
-        'classification': 2
-    },
+    } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
 
-# Add textual descriptions and labels and stuff
+# Short titles, titles, etc.
 # CHECKS['privacy']['openwpm_scan_failed']['title'] = "Check if Website scan succeeded"
 # CHECKS['privacy']['openwpm_scan_failed']['short_title'] = "Website scan succeeded"
 

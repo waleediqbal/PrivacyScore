@@ -1103,11 +1103,11 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
         country_choices = [(None, _('Global'))] + list(enumerate(x for x in countries))
 
         class CountryForm(forms.Form):
-            country = forms.ChoiceField(choices=country_choices, required=True)
+            country = forms.ChoiceField(choices=country_choices, required=False)
 
         country_form = CountryForm
 
-        if 'country' in request.GET:
+        if ('country' in request.GET) and request.GET['country']!="":
             country_groups = OrderedDict()
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
@@ -1159,11 +1159,11 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
         country_choices = [(None, _('Global'))] + list(enumerate(x for x in countries))
 
         class CountryForm(forms.Form):
-            country = forms.ChoiceField(choices=country_choices, required=True)
+            country = forms.ChoiceField(choices=country_choices, required=False)
 
         country_form = CountryForm
 
-        if 'country' in request.GET:
+        if ('country' in request.GET) and request.GET['country']!="":
             country_groups = OrderedDict()
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
@@ -1212,11 +1212,11 @@ def web_privacy_dashboard(request: HttpRequest) -> HttpResponse:
         country_choices = [(None, _('Global'))] + list(enumerate(x for x in countries))
 
         class CountryForm(forms.Form):
-            country = forms.ChoiceField(choices=country_choices, required=True)
+            country = forms.ChoiceField(choices=country_choices, required=False)
 
         country_form = CountryForm
 
-        if 'country' in request.GET:
+        if ('country' in request.GET) and request.GET['country']!="":
             country_groups = OrderedDict()
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
