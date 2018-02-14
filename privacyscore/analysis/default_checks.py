@@ -105,12 +105,8 @@ CHECKS['privacy']['server_locations'] = {
     } if len(keys['mx_locations']) > 0 else None,
     'missing': None,
 }
-#####################
-## Security Checks ##
-#####################
-
 # Check for exposed internal system information
-CHECKS['security']['leaks'] = {
+CHECKS['privacy']['leaks'] = {
     'keys': {'leaks','reachable','success'},
     'rating': lambda **keys: None if not keys['reachable'] or not keys['success'] else {
         'description': _('The site does not disclose internal system information at usual paths.'),
@@ -121,6 +117,10 @@ CHECKS['security']['leaks'] = {
     },
     'missing': None,
 }
+#####################
+## Security Checks ##
+#####################
+
 # Check for CSP header
 CHECKS['security']['header_csp'] = {
     'keys': {'headerchecks',},
@@ -920,8 +920,8 @@ CHECKS['privacy']['google_analytics_anonymizeIP_not_set']['short_title'] = "Goog
 CHECKS['privacy']['server_locations']['title'] = 'Check whether web & mail servers are located in same country'
 CHECKS['privacy']['server_locations']['short_title'] = 'Web & mail servers in same country'
 
-CHECKS['security']['leaks']['title'] = "Check for unintentional information leaks"
-CHECKS['security']['leaks']['short_title'] = 'Unintentional information leaks'
+CHECKS['leaks']['leaks']['title'] = "Check for unintentional information leaks"
+CHECKS['leaks']['leaks']['short_title'] = 'Unintentional information leaks'
 
 CHECKS['security']['header_csp']['title'] = 'Check for presence of Content Security Policy'
 CHECKS['security']['header_csp']['short_title'] = 'Content Security Policy header set'

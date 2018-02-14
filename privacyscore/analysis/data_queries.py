@@ -401,8 +401,7 @@ def enc_web_results(myList = []) -> OrderedDict:
 		privacy_groups[check] = (list(query['value']), list(query['count']), pass_per)
 
 	################### Web Security ######################
-	security_checks = ['Unintentional information leaks',
-						'Content Security Policy header set',
+	security_checks = ['Content Security Policy header set',
 						'X-Frame-Options header set',
 						'Secure XSS Protection header set',
 						'Secure X-Content-Type-Options header set',
@@ -656,6 +655,7 @@ def web_privacy_results(myList = []) -> OrderedDict:
 			pass_count = query[1] if '1' in result.index else 0
 			fail_count = query[0] if '0' in result.index else 0
 			pass_per   = round((pass_count / (pass_count + fail_count)) * 100, 1)
+			check = check.replace("&", "and")
 			privacy_groups[check] = (['bad', 'good'], [fail_count, pass_count], float(pass_per))
 	########################################################
 	mydict = []
