@@ -920,8 +920,8 @@ CHECKS['privacy']['google_analytics_anonymizeIP_not_set']['short_title'] = "Goog
 CHECKS['privacy']['server_locations']['title'] = 'Check whether web & mail servers are located in same country'
 CHECKS['privacy']['server_locations']['short_title'] = 'Web & mail servers in same country'
 
-CHECKS['leaks']['leaks']['title'] = "Check for unintentional information leaks"
-CHECKS['leaks']['leaks']['short_title'] = 'Unintentional information leaks'
+CHECKS['privacy']['leaks']['title'] = "Check for unintentional information leaks"
+CHECKS['privacy']['leaks']['short_title'] = 'Unintentional information leaks'
 
 CHECKS['security']['header_csp']['title'] = 'Check for presence of Content Security Policy'
 CHECKS['security']['header_csp']['short_title'] = 'Content Security Policy header set'
