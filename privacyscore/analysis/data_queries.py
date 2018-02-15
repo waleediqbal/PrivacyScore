@@ -4,11 +4,11 @@ import re
 import collections
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import mpld3
 import Orange
+
 import time
 import threading
+
 from Orange.data import Domain, DiscreteVariable, ContinuousVariable
 from orangecontrib.associate.fpgrowth import *
 from tkinter import *
@@ -17,6 +17,7 @@ from collections import OrderedDict
 from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
 from privacyscore.analysis.default_checks import CHECKS
 from privacyscore.backend.models import Scan, ScanList, Site, ScanResult, Analysis, AnalysisCategory
+from pandas.io.json import json_normalize
 
 #countries with most issues in each category
 def country_category_list(myList = []) -> OrderedDict:
