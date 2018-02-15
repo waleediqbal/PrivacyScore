@@ -13,6 +13,9 @@ import privacyscore.analysis.data_queries as queries
 class Command(BaseCommand):
 	help = 'Find associations between checks.'
 
+	def add_arguments(self, parser):
+		parser.add_argument('min_support')
+
 	def handle(self, *args, **options):
 		analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
 		sss = analyse.category.values('result')
@@ -21,4 +24,4 @@ class Command(BaseCommand):
 
 		if analyse:
 			result = df
-			queries.association(result)
+			queries.association(result, options['min_support'])

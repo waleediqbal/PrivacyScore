@@ -668,7 +668,7 @@ def web_privacy_results(myList = []) -> OrderedDict:
 
 	return privacy_groups, google_group
 
-def association(myList = []):
+def association(myList = [], min_supp):
 	df = myList
 	df = df.drop('url', axis=1)
 	df = df.drop('country', axis=1)
@@ -680,7 +680,7 @@ def association(myList = []):
 	domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
 	data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
 	data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
-	min_support = 0.5
+	min_support = min_supp
 	print("num of required transactions = ", int(input_assoc_rules.shape[0]*min_support))
 	num_trans = input_assoc_rules.shape[0]*min_support
 	itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
