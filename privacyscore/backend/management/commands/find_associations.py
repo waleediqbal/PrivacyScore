@@ -23,4 +23,4 @@ class Command(BaseCommand):
 		if analyse:
 			analyse_cat = analyse.category.values('result')
 			df = json_normalize(analyse_cat, record_path='result')
-			queries.association(options['min_support'], options['min_confidence'])
+			queries.association(df, options['min_support'], options['min_confidence'])
