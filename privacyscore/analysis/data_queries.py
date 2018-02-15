@@ -668,7 +668,7 @@ def web_privacy_results(myList = []) -> OrderedDict:
 
 	return privacy_groups, google_group
 
-def association(myList = [], min_supp = 0):
+def association(myList = [], min_supp = 0.1):
 	df = myList
 	df = df.drop('url', axis=1)
 	df = df.drop('country', axis=1)
