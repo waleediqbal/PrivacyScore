@@ -18,4 +18,9 @@ class Command(BaseCommand):
 		parser.add_argument('min_confidence')
 
 	def handle(self, *args, **options):
-		queries.association_thread(options['min_support'], options['min_confidence'])
+		#queries.association_thread(options['min_support'], options['min_confidence'])
+		analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+		if analyse:
+			analyse_cat = analyse.category.values('result')
+			df = json_normalize(analyse_cat, record_path='result')
+			queries.association(options['min_support'], options['min_confidence'])
