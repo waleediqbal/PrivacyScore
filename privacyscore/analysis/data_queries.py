@@ -7,6 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mpld3
 import Orange
+import time
+import threading
 from Orange.data import Domain, DiscreteVariable, ContinuousVariable
 from orangecontrib.associate.fpgrowth import *
 from tkinter import *
@@ -668,7 +670,7 @@ def web_privacy_results(myList = []) -> OrderedDict:
 
 	return privacy_groups, google_group
 
-def association(myList = [], min_supp = 0.1):
+def association(myList = [], min_supp = 0.1, confidence=0.1):
 	df = myList
 	df = df.drop('url', axis=1)
 	df = df.drop('country', axis=1)
@@ -686,14 +688,16 @@ def association(myList = [], min_supp = 0.1):
 	itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
 	print(len(itemsets))
 
-	confidence = 0.6
+	confidence = float(confidence)
 
 	rules_df = pd.DataFrame()
 	rules = [(P, Q, supp, conf)
 	for P, Q, supp, conf in association_rules(itemsets, confidence)
 		if len(Q) == 1 ]
+
 	names = {item: '{}={}'.format(var.name, val)
 		for item, var, val in OneHot.decode(mapping, data_gro_1, mapping)}
+
 	eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
 	N = input_assoc_rules.shape[0] * 0.5
 	rule_stats = list(rules_stats(rules, itemsets, N))
@@ -705,7 +709,7 @@ def association(myList = [], min_supp = 0.1):
 		if named_cons in eligible_ante:
 			rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
 			ante_rule = ', '.join(rule_lhs)
-			if ante_rule and len(rule_lhs)>3 and len(rule_lhs)<7 :
+			if ante_rule and len(rule_lhs)>2:
 				rule_dict = {'support' : ex_rule_frm_rule_stat[2],
 				             'confidence' : ex_rule_frm_rule_stat[3],
 			                 'coverage' : ex_rule_frm_rule_stat[4],
@@ -723,3 +727,12 @@ def association(myList = [], min_supp = 0.1):
 		print(result.to_csv(sep=' ', index=False, header=False))
 	else:
 		print("Unable to generate any rule")
+
+def association_thread(min_supp, min_conf):
+	analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+	if analyse:
+		analyse_cat = analyse.category.values('result')
+		df = json_normalize(analyse_cat, record_path='result')
+		thread = threading.Thread(target=association,args=(df, min_supp, min_conf))
+		thread.daemon = True
+		thread.start()

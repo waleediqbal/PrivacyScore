@@ -15,13 +15,7 @@ class Command(BaseCommand):
 
 	def add_arguments(self, parser):
 		parser.add_argument('min_support')
+		parser.add_argument('min_confidence')
 
 	def handle(self, *args, **options):
-		analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
-		sss = analyse.category.values('result')
-		
-		df = json_normalize(sss, record_path='result')
-
-		if analyse:
-			result = df
-			queries.association(result, options['min_support'])
+		queries.association_thread(options['min_support'], options['min_confidence'])
