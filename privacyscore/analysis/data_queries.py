@@ -705,7 +705,7 @@ def association(myList = [], min_supp = 0.1):
 		if named_cons in eligible_ante:
 			rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
 			ante_rule = ', '.join(rule_lhs)
-			if ante_rule and len(rule_lhs)<6 :
+			if ante_rule and len(rule_lhs)>3 and len(rule_lhs)<7 :
 				rule_dict = {'support' : ex_rule_frm_rule_stat[2],
 				             'confidence' : ex_rule_frm_rule_stat[3],
 			                 'coverage' : ex_rule_frm_rule_stat[4],
@@ -719,7 +719,7 @@ def association(myList = [], min_supp = 0.1):
 	print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
 	if not rules_df.empty:
 		pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
-		result = pruned_rules_df[['antecedent','consequent', 'support','confidence','lift']].groupby('support').max().reset_index().sort_values(['support','confidence'], ascending=False)
+		result = pruned_rules_df[['antecedent','consequent', 'support','confidence','lift']].groupby('consequent').max().reset_index().sort_values(['support','confidence'], ascending=False)
 		print(result.to_csv(sep=' ', index=False, header=False))
 	else:
 		print("Unable to generate any rule")
