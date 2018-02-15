@@ -680,7 +680,7 @@ def association(myList = [], min_supp = 0):
 	domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
 	data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
 	data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
-	min_support = min_supp
+	min_support = float(min_supp)
 	print("num of required transactions = ", int(input_assoc_rules.shape[0]*min_support))
 	num_trans = input_assoc_rules.shape[0]*min_support
 	itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
