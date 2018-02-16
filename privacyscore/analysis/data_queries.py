@@ -690,7 +690,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	print("Total rows after dropping avg. missing value rows : ", int(df.shape[0]))
 
 	df = df.replace(np.nan, '0')
-	df = df.iloc[30000:]
+	#df = df.iloc[30000:]
 
 	input_assoc_rules = df
 
