@@ -684,12 +684,13 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	print("Total rows before : ", int(df.shape[0]))
 
 	df['missing_val'] = df.isnull().sum(axis=1)
-	df = df[df['missing_val'] < round(df['missing_val'].mean())]
+	df = df[df['missing_val'] <= np.ceil(df['missing_val'].mean())]
 
-	print("Average missing values in each transaction = ", int(round(df['missing_val'].mean())))
+	print("Average missing values in each transaction = ", float(np.ceil(df['missing_val'].mean())))
 	print("Total rows after dropping avg. missing value rows : ", int(df.shape[0]))
 
 	df = df.replace(np.nan, '0')
+	df = df.iloc[:, :-20]
 	#df = df.iloc[30000:]
 
 	input_assoc_rules = df
