@@ -690,10 +690,14 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 
 	print("Average missing values in each transaction = ", float(np.ceil(df['missing_val'].mean())))
 	print("Total rows after dropping avg. missing value rows : ", int(df.shape[0]))
+	df = df.drop('missing_val', axis=1)
 
 	df = df.replace(np.nan, '0')
 	df = df.iloc[:, :-50]
 	df = df.iloc[30000:]
+
+	print("Total rows = ", int(df.shape[0]))
+	print("Total columns = ", int(df.shape[1]))
 
 	# restricted_columns = ['Sites setting first party cookies', 'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
 	# 'Automatic HTTPS redirection', 'Server prevents using HTTPS', 'HSTS header duration sufficient', 'Server ready for HSTS preloading',
@@ -731,6 +735,8 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
 	N = input_assoc_rules.shape[0] * 0.5
 	rule_stats = list(rules_stats(rules, itemsets, N))
+
+	print("Step 3: Stats for rules generated")
 	rule_list_df = []
 	for ex_rule_frm_rule_stat in rule_stats:
 		ante = ex_rule_frm_rule_stat[0]
