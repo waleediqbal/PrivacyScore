@@ -680,28 +680,29 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	df = df.drop('mx_country', axis=1)
 	#df = df.replace('None', '0')
 	df = df.replace('None', np.nan)
-	df = df[df['Server offers HTTPS'] == '1']
+
+	#df = df[df['Server offers HTTPS'] == '1']
 
 	print("Total rows before : ", int(df.shape[0]))
 
 	df['missing_val'] = df.isnull().sum(axis=1)
-	df = df[df['missing_val'] <= np.ceil(df['missing_val'].mean())]
+	#df = df[df['missing_val'] <= np.ceil(df['missing_val'].mean())]
 
 	print("Average missing values in each transaction = ", float(np.ceil(df['missing_val'].mean())))
 	print("Total rows after dropping avg. missing value rows : ", int(df.shape[0]))
 
 	df = df.replace(np.nan, '0')
-	df = df.iloc[:, :-40]
-	#df = df.iloc[30000:]
+	df = df.iloc[:, :-50]
+	df = df.iloc[30000:]
 
-	restricted_columns = ['Sites setting first party cookies', 'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
-	'Automatic HTTPS redirection', 'Server prevents using HTTPS', 'HSTS header duration sufficient', 'Server ready for HSTS preloading',
-	'Inclusion in Chrome HSTS preload list', 'No Mixed Content on HTTPS sites', 'Domain has Mail server', 'Web & mail servers in same country',
-	'Mail server supports SSL 2.0', 'SSL 2.0', 'Mail server supports SSL 3.0', 'SSL 3.0']
+	# restricted_columns = ['Sites setting first party cookies', 'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
+	# 'Automatic HTTPS redirection', 'Server prevents using HTTPS', 'HSTS header duration sufficient', 'Server ready for HSTS preloading',
+	# 'Inclusion in Chrome HSTS preload list', 'No Mixed Content on HTTPS sites', 'Domain has Mail server', 'Web & mail servers in same country',
+	# 'Mail server supports SSL 2.0', 'SSL 2.0', 'Mail server supports SSL 3.0', 'SSL 3.0']
 
-	for column in restricted_columns:
-		if column in df.columns:
-			df.drop([column], axis=1, inplace=True)
+	# for column in restricted_columns:
+	# 	if column in df.columns:
+	# 		df.drop([column], axis=1, inplace=True)
 	input_assoc_rules = df
 
 	domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
@@ -720,8 +721,12 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	for P, Q, supp, conf in association_rules(itemsets, confidence)
 		if len(Q) > 1 ]
 
+	print("Step 1: Rules generated")
+
 	names = {item: '{}={}'.format(var.name, val)
 		for item, var, val in OneHot.decode(mapping, data_gro_1, mapping)}
+
+	print("Step 2: Decoded")
 
 	eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
 	N = input_assoc_rules.shape[0] * 0.5
