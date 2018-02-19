@@ -718,7 +718,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	rules_df = pd.DataFrame()
 	rules = [(P, Q, supp, conf)
 	for P, Q, supp, conf in association_rules(itemsets, confidence)
-		if len(Q) == 1 ]
+		if len(Q) > 1 ]
 
 	names = {item: '{}={}'.format(var.name, val)
 		for item, var, val in OneHot.decode(mapping, data_gro_1, mapping)}
@@ -730,20 +730,22 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	for ex_rule_frm_rule_stat in rule_stats:
 		ante = ex_rule_frm_rule_stat[0]
 		cons = ex_rule_frm_rule_stat[1]
-		named_cons = names[next(iter(cons))]
-		if named_cons in eligible_ante:
-			rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
-			ante_rule = ', '.join(rule_lhs)
-			if ante_rule and len(rule_lhs)>2:
-				rule_dict = {'support' : ex_rule_frm_rule_stat[2],
-				             'confidence' : ex_rule_frm_rule_stat[3],
-			                 'coverage' : ex_rule_frm_rule_stat[4],
-			                 'strength' : ex_rule_frm_rule_stat[5],
-			                 'lift' : ex_rule_frm_rule_stat[6],
-			                 'leverage' : ex_rule_frm_rule_stat[7],
-			                 'antecedent': ante_rule,
-			                 'consequent':named_cons }
-				rule_list_df.append(rule_dict)
+		#named_cons = names[next(iter(cons))]
+
+		named_cons = [names[i] for i in cons if names[i] in eligible_ante]
+		named_cons = ', '.join(named_cons)
+		#if named_cons in eligible_ante:
+		rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
+		ante_rule = ', '.join(rule_lhs)
+		if ante_rule and len(rule_lhs)>2 :
+			rule_dict = {'support' : ex_rule_frm_rule_stat[2],
+			             'confidence' : ex_rule_frm_rule_stat[3],
+		                 'coverage' : ex_rule_frm_rule_stat[4],
+		                 'strength' : ex_rule_frm_rule_stat[5],
+		                 'lift' : ex_rule_frm_rule_stat[6],
+		                 'leverage' : ex_rule_frm_rule_stat[7],
+		                 'antecedent': ante_rule,
+		                 'consequent':named_cons }
 	rules_df = pd.DataFrame(rule_list_df)
 	print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
 	if not rules_df.empty:
