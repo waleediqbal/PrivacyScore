@@ -757,7 +757,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 		                 'leverage' : ex_rule_frm_rule_stat[7],
 		                 'antecedent': ante_rule,
 		                 'consequent':named_cons }
-		    rule_list_df.append(rule_dict)
+			rule_list_df.append(rule_dict)
 	rules_df = pd.DataFrame(rule_list_df)
 	print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
 	if not rules_df.empty:
