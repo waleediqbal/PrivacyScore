@@ -20,9 +20,8 @@ class Command(BaseCommand):
 		analyse.start = timezone.now()
 		analyse.save()
 
-		# scan_list = ScanList.objects.get(id=121)
-		# sites = scan_list.sites.all()
-		sites = Site.objects.order_by('-id')[:500]
+		scan_list = ScanList.objects.get(id=121)
+		sites = scan_list.sites.all()
 		if sites:
 			site_count = 0
 			for site in sites:
