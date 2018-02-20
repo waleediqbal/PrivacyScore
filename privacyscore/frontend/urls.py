@@ -48,4 +48,6 @@ urlpatterns = [
     url(r'^enc_web_dashboard/$', views.enc_web_dashboard, name='enc_web_dashboard'),
     url(r'^enc_mail_dashboard/$', views.enc_mail_dashboard, name='enc_mail_dashboard'),
     url(r'^web_privacy_dashboard/$', views.web_privacy_dashboard, name='web_privacy_dashboard'),
+    url(r'^list/(?P<scan_list_id>\d+)/analysis/$', views.scan_list_analysis,
+        name='scan_list_analysis'),
 ]

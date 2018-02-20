@@ -521,14 +521,10 @@ def enc_mail_results(myList = []) -> OrderedDict:
 		'good': 'Supported'
 	}
 
-	# df1 = pd.DataFrame(df, columns=['url'])
-	# df1.drop_duplicates('url', inplace = True)
-	# web_count = df1.shape[0]
-
 	for check, data in CHECKS['mx'].items():
 		mydict.append(data.get('short_title'))
 
-	melted_data = pd.melt(df, id_vars=['country'], value_vars=mydict, var_name='check', value_name='value')
+	melted_data = pd.melt(df, id_vars=['mx_country'], value_vars=mydict, var_name='check', value_name='value')
 	melted_data = melted_data.replace(to_replace='None', value=np.nan).dropna()
 
 	melted_data_count = melted_data.groupby(by=['check', 'value'])['value'].count().reset_index(name='count')

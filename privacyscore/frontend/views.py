@@ -1233,3 +1233,55 @@ def web_privacy_dashboard(request: HttpRequest) -> HttpResponse:
         'last_analysis': analyse.end,
         'country_form': country_form
     })
+
+def scan_list_analysis(request: HttpRequest, scan_list_id: int) -> HttpResponse:
+    scan_list = get_object_or_404(
+        ScanList.objects.annotate_running_scans_count().prefetch_columns(), pk=scan_list_id)
+
+    sites_list = scan_list.sites.all()
+    sites_list = [site.url for site in sites_list]
+
+    analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
+
+    if analyse:
+        analyse_cat = analyse.category.values('result')
+        df = json_normalize(analyse_cat, record_path='result')
+        df = df[df['url'].isin(sites_list)]
+
+        country_count = df.country.value_counts().reset_index().rename(columns={'index': 'country', 'country': 'z'})
+        country_count['code'] = country_count['country'].map(COUNTRY_DICT)
+        country_count['z'] = round((country_count['z'] / country_count['z'].sum()) * 100, 1)
+        ssl_country_json = country_count.to_json(orient='records')
+
+        mx_country_count = df.mx_country.value_counts().reset_index().rename(columns={'index': 'mx_country', 'mx_country': 'z'})
+        mx_country_count['code'] = mx_country_count['mx_country'].map(COUNTRY_DICT)
+        mx_country_count['z'] = round((mx_country_count['z'] / mx_country_count['z'].sum()) * 100, 1)
+        mx_country_json = mx_country_count.to_json(orient='records')
+
+        ssl_detailed_list, web_vulnerabilities, hsts_groups, valid_hsts, hsts_included_data, https_data, other_checks, security_groups = queries.enc_web_results(df)
+        mx_enc_support, tls_group, vul_group = queries.enc_mail_results(df)
+        web_privacy, google_group = queries.web_privacy_results(df)
+
+        return render(request, 'frontend/scan_list_analysis.html', {
+            'scan_list': scan_list,
+            'ssl_list' : ssl_detailed_list,
+            'vul_list' : web_vulnerabilities,
+            'hsts_groups': hsts_groups,
+            'valid_hsts': valid_hsts,
+            'hsts_included_data': hsts_included_data,
+            'https_data': https_data,
+            'other_checks': other_checks,
+            'security_groups': security_groups,
+            'mx_enc_support' : mx_enc_support,
+            'tls_group' : tls_group,
+            'vul_group' : vul_group,
+            'web_privacy': web_privacy,
+            'google_group': google_group,
+            'ssl_country_json': ssl_country_json,
+            'mx_country_json': mx_country_json,
+            'last_analysis': analyse.end
+        })
+    else:
+        return render(request, 'frontend/scan_list_analysis.html', {
+            'scan_list': scan_list
+        })
