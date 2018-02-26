@@ -18,3 +18,6 @@ pygments
 django-pandas
 matplotlib
 mpld3
+orange3
+orange3-associate
+gunicorn

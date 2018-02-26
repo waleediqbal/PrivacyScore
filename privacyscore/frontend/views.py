@@ -1150,6 +1150,7 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
     sss = analyse.category.values('result')
 
     df = json_normalize(sss, record_path='result')
+    print(df.apply(pd.value_counts).fillna(0))
     if analyse:
         df_country = df['mx_country']
         countries = list(set(df_country))
