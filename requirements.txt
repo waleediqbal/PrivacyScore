@@ -21,3 +21,4 @@ mpld3
 orange3
 orange3-associate
 gunicorn
+django-debug-toolbar
