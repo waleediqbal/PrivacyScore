@@ -17,6 +17,7 @@ from collections import Counter, defaultdict
 from collections import OrderedDict
 from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
 from privacyscore.analysis.default_checks import CHECKS
+from privacyscore.analysis.frontend_data import donut_chart, column_chart, donut_chart_single
 from privacyscore.backend.models import Scan, ScanList, Site, ScanResult, Analysis, AnalysisCategory
 from pandas.io.json import json_normalize
 
@@ -261,8 +262,11 @@ def enc_web_results(myList = []) -> OrderedDict:
 	mydict = []
 	hsts_groups = OrderedDict()
 	privacy_groups = OrderedDict()
-
-	my_arr = ['SSL 2.0', 'SSL 3.0', 'Legacy TLS 1.0', 'TLS 1.1', 'TLS 1.2']
+	ssl_support = []
+	web_vul = []
+	valid_hsts = []
+	other_checks = []
+	security_checks = []
 
 	for group in DEFAULT_GROUP_ORDER:
 		if group == 'ssl' or group == 'security':
@@ -284,173 +288,71 @@ def enc_web_results(myList = []) -> OrderedDict:
 	melted_data2['value'] = melted_data2['value'].map({'0': 'bad', '1': 'good', '2': 'neutral'})
 	melted_data2['percentage'] = round((melted_data2['count'] / melted_data2['total_count']) * 100, 1)
 
-	my_arr = ['SSL 2.0', 'SSL 3.0', 'Legacy TLS 1.0', 'TLS 1.1', 'TLS 1.2']
+	ssl_support_keys = ['web_insecure_protocols_sslv2', 'web_insecure_protocols_sslv3', 'web_secure_protocols_tls1',
+	'web_secure_protocols_tls1_1', 'web_secure_protocols_tls1_2']
 
-	web_vul = ["Protected against Heartbleed", "Protected against CCS attack", "Protected against Ticketbleed", "Protected against Secure Renegotiation",  "Protected against Secure Client-Initiated Renegotiation", "Protected against CRIME", "Protected against BREACH", "Protected against POODLE", "Protected against SWEET32", "Protected against FREAK", "Protected against DROWN", "Protected against LOGJAM", "Protected against BEAST", "Protected against LUCKY13"]
+	for key in ssl_support_keys:
+		ssl_support.append(CHECKS['ssl'][key]['short_title'])
 
-	valid_hsts = ['HSTS header duration sufficient', 'Server ready for HSTS preloading']
+	web_vul_keys = ['web_vuln_heartbleed', 'web_vuln_ccs', 'web_vuln_ticketbleed', 'web_vuln_secure_renego',
+	'web_vuln_secure_client_renego', 'web_vuln_crime', 'web_vuln_breach', 'web_vuln_poodle', 'web_vuln_sweet32',
+	'web_vuln_freak', 'web_vuln_drown', 'web_vuln_logjam', 'web_vuln_beast', 'web_vuln_lucky13']
+	for key in web_vul_keys:
+		web_vul.append(CHECKS['ssl'][key]['short_title'])
 
-	other_checks = ['SSL certificate valid', 'Perfect Forward Secrecy offered', 'Insecure RC4 ciphers used', 'TLS_FALLBACK_SCSV used']
+	valid_hsts_keys = ['web_hsts_header_duration', 'web_hsts_preload_prepared']
+	for key in valid_hsts_keys:
+		valid_hsts.append(CHECKS['ssl'][key]['short_title'])
 
-	privacy_checks = ['3rd party embeds', '3rd party embeds are trackers', 'First party cookies', 'Third party cookies', 'Google Analytics usage', 'Google Analytics privacy extension enabled']
+	other_checks_keys = ['web_cert', 'web_pfs', 'web_vuln_rc4', 'web_vuln_fallback_scsv']
+	for key in other_checks_keys:
+		other_checks.append(CHECKS['ssl'][key]['short_title'])
 
-	privacy_value = melted_data2.loc[melted_data2['check'].isin(privacy_checks)]
+	security_checks_keys = ['header_csp', 'header_xfo', 'header_xssp', 'header_xcto', 'header_ref']
+	for key in security_checks_keys:
+		security_checks.append(CHECKS['security'][key]['short_title'])
 
-	CHECKS_TEXT = {
-	    'ssl': OrderedDict(),
-	}
-	CHECKS_TEXT['ssl']['Valid Strict-Transport-Security (HSTS)'] = {
-		'bad': 'Sites not using HSTS',
-		'good': 'Sites using HSTS'
-	}
-	CHECKS_TEXT['ssl']['HSTS header duration sufficient'] = {
-		'bad': 'Short duration',
-		'good': 'Sufficiently long duration'
-	}
+	########################## HTTPS check #####################################
+	https_offered = CHECKS['ssl']['https_scan_finished']['short_title']
+	https_data = donut_chart_single(melted_data2, https_offered, 'https_scan_finished', 'ssl')
 
-	CHECKS_TEXT['ssl']['Server ready for HSTS preloading'] = {
-		'bad': 'Not ready',
-		'good': 'Ready'
-	}
-	CHECKS_TEXT['ssl']['Inclusion in Chrome HSTS preload list'] = {
-		'bad': ['Not included'],
-		'good': 'Included'
-	}
-	CHECKS_TEXT['ssl']['Server offers HTTPS'] = {
-		'bad': 'Not deployed',
-		'good': 'HTTPS deployed'
-	}
-	CHECKS_TEXT['ssl']['SSL certificate valid'] = {
-		'bad': 'Invalid',
-		'good': 'Valid'
-	}
-	CHECKS_TEXT['ssl']['Perfect Forward Secrecy offered'] = {
-		'bad': 'Not offered',
-		'good': 'Offered'
-	}
-	CHECKS_TEXT['ssl']['Insecure RC4 ciphers used'] = {
-		'bad': 'RC4 ciphers not used',
-		'good': 'RC4 ciphers used'
-	}
-	CHECKS_TEXT['ssl']['TLS_FALLBACK_SCSV used'] = {
-		'bad': 'Not used',
-		'good': 'Used'
-	}
-
-	# https check
-	https_offered = 'Server offers HTTPS'
-	query = melted_data2.query('check == @https_offered')
-	pass_count = query[query['value'] == 'good']
-	pass_per = pass_count['percentage'].values[0] if pass_count['percentage'].values else 0
-
-	fail_per = query[query['value'] == 'bad']
-	good_count = pass_count['count'].values[0] if pass_count['count'].values else 0
-	bad_count = fail_per['count'].values[0] if fail_per['count'].values else 0
-
-	cat_array = [CHECKS_TEXT['ssl'][https_offered].get('bad'), CHECKS_TEXT['ssl'][https_offered].get('good')]
-	https_data = (cat_array, [bad_count, good_count], pass_per)
 	#############################################################################
 
 	########################## Valid HSTS check #################################
-	valid_hsts_check = 'Valid Strict-Transport-Security (HSTS)'
-	query = melted_data2.query('check == @valid_hsts_check')
-	pass_count = query[query['value'] == 'good']
-	pass_per = pass_count['percentage'].values[0] if pass_count['percentage'].values else 0
+	valid_hsts_check = CHECKS['ssl']['web_hsts_header']['short_title']
+	hsts_valid_data = donut_chart_single(melted_data2, valid_hsts_check, 'web_hsts_header', 'ssl')
 
-	fail_per = query[query['value'] == 'bad']
-	good_count = pass_count['count'].values[0] if pass_count['count'].values else 0
-	bad_count = fail_per['count'].values[0] if fail_per['count'].values else 0
-
-	cat_array = [CHECKS_TEXT['ssl'][valid_hsts_check].get('bad'), CHECKS_TEXT['ssl'][valid_hsts_check].get('good')]
-	#query['value'].replace(['bad','good'],[CHECKS_TEXT['ssl'][valid_hsts_check].get('bad'), CHECKS_TEXT['ssl'][valid_hsts_check].get('good')], inplace=True)
-
-	hsts_valid_data = (cat_array, [bad_count, good_count], pass_per)
-	# hsts_valid_data = (list(query['value']), list(query['count']), pass_per)
 	#############################################################################
 
-	hsts_included = 'Inclusion in Chrome HSTS preload list'
-	query = melted_data2.query('check == @hsts_included')
-	pass_count = query[query['value'] == 'good']
-	pass_per = pass_count['percentage'].values[0] if pass_count['percentage'].values else 0
-
-	fail_per = query[query['value'] == 'bad']
-	good_count = pass_count['count'].values[0] if pass_count['count'].values else 0
-	bad_count = fail_per['count'].values[0] if fail_per['count'].values else 0
-
-	cat_array = [CHECKS_TEXT['ssl'][hsts_included].get('bad'), CHECKS_TEXT['ssl'][hsts_included].get('good')]
-
-	hsts_included_data = (cat_array, [bad_count, good_count], pass_per, hsts_included)
-	#hsts_included_data = (list(query['value']), list(query['count']), pass_per, hsts_included)
+	hsts_included = CHECKS['ssl']['web_hsts_preload_listed']['short_title']
+	hsts_included_data = donut_chart_single(melted_data2, hsts_included, 'web_hsts_preload_listed', 'ssl')
 	############################################################################
 
-	hsts_valid = melted_data2.loc[melted_data2['check'].isin(valid_hsts)]
+	hsts_valid  = melted_data2.loc[melted_data2['check'].isin(valid_hsts)]
+	hsts_groups = donut_chart(melted_data2, valid_hsts, valid_hsts_keys, 'ssl')
 
-	for check in valid_hsts:
-		query = melted_data2.query('check == @check')
-		pass_count = query[query['value'] == 'good']
-		pass_per = pass_count['percentage'].values[0] if pass_count['percentage'].values else 0
+	############################################################################
 
-		fail_per = query[query['value'] == 'bad']
-		good_count = pass_count['count'].values[0] if pass_count['count'].values else 0
-		bad_count = fail_per['count'].values[0] if fail_per['count'].values else 0
-
-		#query['value'].replace(['bad','good'],[CHECKS_TEXT['ssl'][check].get('bad'), CHECKS_TEXT['ssl'][check].get('good')], inplace=True)
-		cat_array = [CHECKS_TEXT['ssl'][check].get('bad'), CHECKS_TEXT['ssl'][check].get('good')]
-		hsts_groups[check] = (cat_array, [bad_count, good_count], pass_per)
-
-	for check in privacy_checks:
-		query = melted_data2.query('check == @check')
-		pass_per = query[query['value'] == 'good']
-		pass_per = pass_per['percentage'].values[0] if pass_per['percentage'].values else 0
-
-		privacy_groups[check] = (list(query['value']), list(query['count']), pass_per)
-
-	################### Web Security ######################
-	security_checks = ['Content Security Policy header set',
-						'X-Frame-Options header set',
-						'Secure XSS Protection header set',
-						'Secure X-Content-Type-Options header set',
-						'Referrer Policy header set']
-
+	############################ Web Security ##################################
 	security_data = melted_data2.loc[melted_data2['check'].isin(security_checks)]
 
 	security_groups = OrderedDict()
-	for check in security_checks:
-		query = melted_data2.query('check == @check')
-		pass_count = query[query['value'] == 'good']
-		pass_per = pass_count['percentage'].values[0] if pass_count['percentage'].values else 0
+	security_groups = donut_chart(security_data, security_checks, security_checks_keys, 'security')
 
-		fail_per = query[query['value'] == 'bad']
-		good_count = pass_count['count'].values[0] if pass_count['count'].values else 0
-		bad_count = fail_per['count'].values[0] if fail_per['count'].values else 0
-
-		#query['value'].replace(['bad','good'],[CHECKS_TEXT['ssl'][check].get('bad'), CHECKS_TEXT['ssl'][check].get('good')], inplace=True)
-		#cat_array = [CHECKS_TEXT['security'][check].get('bad'), CHECKS_TEXT['security'][check].get('good')]
-		cat_array = ['bad', 'good']
-		security_groups[check] = (cat_array, [bad_count, good_count], pass_per)
-	################ OTHER checks #####################
+	########################### OTHER checks ###################################
 	other_groups = OrderedDict()
-	for check in other_checks:
-		query = melted_data2.query('check == @check')
-		pass_count = query[query['value'] == 'good']
-		pass_per = pass_count['percentage'].values[0] if pass_count['percentage'].values else 0
+	other_groups = donut_chart(melted_data2, other_checks, other_checks_keys, 'ssl')
 
-		fail_per = query[query['value'] == 'bad']
-		good_count = pass_count['count'].values[0] if pass_count['count'].values else 0
-		bad_count = fail_per['count'].values[0] if fail_per['count'].values else 0
+	############################################################################
 
-		#query['value'].replace(['bad','good'],[CHECKS_TEXT['ssl'][check].get('bad'), CHECKS_TEXT['ssl'][check].get('good')], inplace=True)
-		cat_array = [CHECKS_TEXT['ssl'][check].get('bad'), CHECKS_TEXT['ssl'][check].get('good')]
-		other_groups[check] = (cat_array, [bad_count, good_count], pass_per)
-	###################################################
 
 	vul_data = melted_data2.loc[melted_data2['check'].isin(web_vul)]
 
-	melted_data2 = melted_data2.loc[melted_data2['check'].isin(my_arr)]
+	melted_data2 = melted_data2.loc[melted_data2['check'].isin(ssl_support)]
 
 	melted_data2['check'] = pd.Categorical(
 	    melted_data2['check'],
-	    categories=my_arr,
+	    categories=ssl_support,
 	    ordered=True
 	)
 	melted_data2 = melted_data2.sort_values('check')
@@ -461,48 +363,14 @@ def enc_web_results(myList = []) -> OrderedDict:
 	my = round(melted_data / (melted_data.groupby(level = [0]).transform(sum)) * 100, 1).reset_index(name="percentage")
 	my['value'] = my['value'].map({'0': 'bad', '1': 'good', '2': 'neutral'})
 
-	#my = my[my['check'].isin(my_arr)].reindex()
-	my = my.loc[my['check'].isin(my_arr)]
+	#my = my[my['check'].isin(ssl_support)].reindex()
+	my = my.loc[my['check'].isin(ssl_support)]
 
-	#checks = my['check'].unique()
+	######################## SSL support #############################
+	described_groups = column_chart(melted_data2, checks)
 
-	good_values = []
-	bad_values = []
-
-	combined_data = []
-	for chk in checks:
-		query = melted_data2.query('check == @chk')
-
-		row1 = melted_data2.loc[(melted_data2['check'] == chk) & (melted_data2['value'] == 'good')]
-		row2 = melted_data2.loc[(melted_data2['check'] == chk) & (melted_data2['value'] == 'bad')]
-		myval = row1['count'].values[0] if row1['count'].values else 0
-		myval1 = row2['count'].values[0] if row2['count'].values else 0
-		good_values.append((myval))
-		bad_values.append((myval1))
-
-	described_groups = (list(checks), good_values, bad_values)
-
-	good_values = []
-	bad_values = []
-	neutral_values = []
-
-	combined_data = []
-	for chk in vul_checks:
-		query = vul_data.query('check == @chk')
-
-		row1 = vul_data.loc[(vul_data['check'] == chk) & (vul_data['value'] == 'good')]
-		row2 = vul_data.loc[(vul_data['check'] == chk) & (vul_data['value'] == 'bad')]
-		row3 = vul_data.loc[(vul_data['check'] == chk) & (vul_data['value'] == 'neutral')]
-
-		myval = row1['count'].values[0] if row1['count'].values else 0
-		myval1 = row2['count'].values[0] if row2['count'].values else 0
-		#myval2 = row3['count'].values[0] if row3['count'].values else 0
-		good_values.append((myval))
-		bad_values.append((myval1))
-		#neutral_values.append((myval2))
-
-	new_set = {x.replace('Protected against ', '') for x in list(vul_checks)}
-	described_vul = (list(new_set), good_values, bad_values, neutral_values)
+	################# Protection against attacks #####################
+	described_vul = column_chart(vul_data, vul_checks)
 
 	return described_groups, described_vul, hsts_groups, hsts_valid_data, hsts_included_data, https_data, other_groups, security_groups
 
@@ -511,15 +379,6 @@ def enc_mail_results(myList = []) -> OrderedDict:
 	tls_group = []
 	vul_group = []
 	mydict = []
-
-	CHECKS_TEXT = {
-	    'mx': OrderedDict(),
-	}
-
-	CHECKS_TEXT['mx']['Mail server supports encryption'] = {
-		'bad': 'Not supported',
-		'good': 'Supported'
-	}
 
 	for check, data in CHECKS['mx'].items():
 		mydict.append(data.get('short_title'))
@@ -546,7 +405,6 @@ def enc_mail_results(myList = []) -> OrderedDict:
 
 	############# check mx encryption support #############
 	mx_support = 'Mail server supports encryption'
-
 	query = melted_data2.query('check == @mx_support')
 	pass_per = query[query['value'] == 'good']
 	if not pass_per.empty:
@@ -554,18 +412,19 @@ def enc_mail_results(myList = []) -> OrderedDict:
 		pass_percentage = pass_per['percentage'].values[0] if pass_per['percentage'].values else 0
 
 		mx_enc_failed = has_mx_count - pass_per['count'].values[0]
-		mx_enc_support = (mx_support, [CHECKS_TEXT['mx'][mx_support].get('bad'), CHECKS_TEXT['mx'][mx_support].get('good')], [mx_enc_failed, pass_per['count'].values[0]], pass_percentage)
+		mx_enc_support = (mx_support, [CHECKS['mx']['mx_scan_finished']['frontend_title'].get('bad'), CHECKS['mx']['mx_scan_finished']['frontend_title'].get('good')], [mx_enc_failed, pass_per['count'].values[0]], pass_percentage)
 	else:
 		mx_enc_support = []
 	#######################################################
 
 	############## Check TLS/SSL support ##################
-	tls_ssl = ['Mail server supports SSL 2.0',
-				'Mail server supports SSL 3.0',
-				'Mail server supports Legacy TLS 1.0',
-				'Mail server supports TLS 1.1',
-				'Mail server supports TLS 1.2'
-				]
+	tls_ssl = []
+	ssl_support_keys = ['mx_insecure_protocols_sslv2', 'mx_insecure_protocols_sslv3', 'mx_secure_protocols_tls1',
+	'mx_secure_protocols_tls1_1', 'mx_secure_protocols_tls1_2']
+
+	for key in ssl_support_keys:
+		tls_ssl.append(CHECKS['mx'][key]['short_title'])
+
 	tls_data = melted_data2.loc[melted_data2['check'].isin(tls_ssl)]
 
 	tls_data['check'] = pd.Categorical(
@@ -576,62 +435,26 @@ def enc_mail_results(myList = []) -> OrderedDict:
 	tls_data = tls_data.sort_values('check')
 	checks = tls_data['check'].unique()
 
-	good_values = []
-	bad_values  = []
-	ssl_checks  = []
-
-	for check in checks:
-		query = tls_data.query('check == @check')
-		row1  = tls_data.loc[(tls_data['check'] == check) & (tls_data['value'] == 'good')]
-		row2  = tls_data.loc[(tls_data['check'] == check) & (tls_data['value'] == 'bad')]
-		count_good = row1['count'].values[0] if row1['count'].values else 0
-		count_bad  = row2['count'].values[0] if row2['count'].values else 0
-		good_values.append((count_good))
-		bad_values.append((count_bad))
-		ssl_checks.append(check.replace('Mail server supports ', ''))
-
-	tls_group = ((ssl_checks), good_values, bad_values)
-	#######################################################
+	tls_group = column_chart(tls_data, checks)
 
 	############## Check vulnerabilities ##################
-	vul_checks = ['Mail server Protected against CRIME',
-					'Mail server Protected against Heartbleed',
-					'Mail server Protected against BEAST',
-					'Mail server Protected against LOGJAM',
-					'Mail server Protected against DROWN',
-					'Mail server Protected against CCS attack',
-					'Mail server Protected against LUCKY13',
-					'Mail server Protected against FREAK',
-					'Mail server Protected against BREACH',
-					'Mail server Protected against Ticketbleed',
-					'Mail server Protected against POODLE',
-					'Mail server Protected against SWEET32',
-					'Mail server Protected against Secure Client-Initiated Renegotiation',
-					'Mail server Protected against Secure Renegotiation']
+	vul_checks = []
+	vul_keys = ['mx_vuln_heartbleed', 'mx_vuln_ccs', 'mx_vuln_ticketbleed', 'mx_vuln_secure_renego',
+	'mx_vuln_secure_client_renego', 'mx_vuln_crime', 'mx_vuln_breach', 'mx_vuln_poodle', 'mx_vuln_sweet32',
+	'mx_vuln_freak', 'mx_vuln_drown', 'mx_vuln_logjam', 'mx_vuln_beast', 'mx_vuln_lucky13']
+
+	for key in vul_keys:
+		vul_checks.append(CHECKS['mx'][key]['short_title'])
 
 	vul_data = melted_data2.loc[melted_data2['check'].isin(vul_checks)]
-	good_values = []
-	bad_values  = []
-	vul_rep_checks  = []
-
-	for check in vul_checks:
-		query = vul_data.query('check == @check')
-		row1  = vul_data.loc[(vul_data['check'] == check) & (vul_data['value'] == 'good')]
-		row2  = vul_data.loc[(vul_data['check'] == check) & (vul_data['value'] == 'bad')]
-		count_good = row1['count'].values[0] if row1['count'].values else 0
-		count_bad  = row2['count'].values[0] if row2['count'].values else 0
-		good_values.append((count_good))
-		bad_values.append((count_bad))
-		vul_rep_checks.append(check.replace('Mail server Protected against ', ''))
-
-	vul_group = ((vul_rep_checks), good_values, bad_values)
-	#######################################################
+	vul_group = column_chart(vul_data, vul_checks)
 
 	return mx_enc_support, tls_group, vul_group
 
 def web_privacy_results(myList = []) -> OrderedDict:
 	df = myList
 	mydict = []
+	check_keys = []
 	privacy_groups = OrderedDict()
 	google_group = OrderedDict()
 	df.drop('country', axis=1, inplace=True)
@@ -639,6 +462,7 @@ def web_privacy_results(myList = []) -> OrderedDict:
 	df.drop('url', axis=1, inplace=True)
 
 	for check, data in CHECKS['privacy'].items():
+		check_keys.append(check)
 		mydict.append(data.get('short_title'))
 
 	result = df.reindex(columns=mydict)
@@ -649,23 +473,14 @@ def web_privacy_results(myList = []) -> OrderedDict:
 	if 'None' in result.index:
 		result.drop('None', inplace=True) #drop None index
 
-	# privacy_checks = ['Sites using third party embeds', 'Sites using trackers', 'Sites setting first party cookies', 'Sites setting third party cookies']
-	for check in result.columns:
-		if check in result.columns:
-			query      = result[check]
-			pass_count = query[1] if '1' in result.index else 0
-			fail_count = query[0] if '0' in result.index else 0
-			pass_per   = round((pass_count / (pass_count + fail_count)) * 100, 1)
-			check = check.replace("&", "and")
-			privacy_groups[check] = (['bad', 'good'], [fail_count, pass_count], float(pass_per))
-	########################################################
-	mydict = []
-	for check, data in CHECKS['security'].items():
-		mydict.append(data.get('short_title'))
-
-	result = df.reindex(columns=mydict)
-
-	security_checks = ['Unintentional information leaks']
+	for check, check_key in zip(result.columns, check_keys):
+		query      = result[check]
+		pass_count = query[1] if '1' in result.index else 0
+		fail_count = query[0] if '0' in result.index else 0
+		pass_per   = round((pass_count / (pass_count + fail_count)) * 100, 1)
+		check = check.replace("&", "and")
+		title_array = [CHECKS['privacy'][check_key]['frontend_title'].get('bad'), CHECKS['privacy'][check_key]['frontend_title'].get('good')]
+		privacy_groups[check] = (title_array, [fail_count, pass_count], float(pass_per))
 
 	return privacy_groups, google_group
 
@@ -759,7 +574,6 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	if not rules_df.empty:
 		pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
 		result = pruned_rules_df[['antecedent','consequent', 'support','confidence','lift']].groupby('consequent').max().reset_index().sort_values(['support','confidence'], ascending=False)
-		#result.to_csv("association_"+time.ctime()+".csv", sep='\t', index=False)
 		result.to_csv(os.path.join('/home/sysop/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
 		print(result.to_csv(sep=' ', index=False, header=False))
 	else:

@@ -901,51 +901,111 @@ CHECKS['mx']['mx_vuln_fallback_scsv'] = {
 
 CHECKS['privacy']['third_parties']['title'] = "Check if 3rd party embeds are being used"
 CHECKS['privacy']['third_parties']['short_title'] = "Sites using third party embeds"
+CHECKS['privacy']['third_parties']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['privacy']['third_party-trackers']['title'] = 'Check if embedded 3rd parties are known trackers'
 CHECKS['privacy']['third_party-trackers']['short_title'] = 'Sites using trackers'
+CHECKS['privacy']['third_party-trackers']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['privacy']['cookies_1st_party']['title'] = "Determine how many cookies the website sets"
 CHECKS['privacy']['cookies_1st_party']['short_title'] = "Sites setting first party cookies"
+CHECKS['privacy']['cookies_1st_party']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['privacy']['cookies_3rd_party']['title'] = "Determine how many cookies are set by third parties"
 CHECKS['privacy']['cookies_3rd_party']['short_title'] = "Sites setting third party cookies"
+CHECKS['privacy']['cookies_3rd_party']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['privacy']['google_analytics_present']['title'] = 'Check if Google Analytics is being used'
 CHECKS['privacy']['google_analytics_present']['short_title'] = 'Sites using Google Analytics'
+CHECKS['privacy']['google_analytics_present']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['privacy']['google_analytics_anonymizeIP_not_set']['title'] = "Check if Google Analytics has the privacy extension enabled"
 CHECKS['privacy']['google_analytics_anonymizeIP_not_set']['short_title'] = "Google Analytics privacy extension enabled"
+CHECKS['privacy']['google_analytics_anonymizeIP_not_set']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['privacy']['server_locations']['title'] = 'Check whether web & mail servers are located in same country'
 CHECKS['privacy']['server_locations']['short_title'] = 'Web & mail servers in same country'
+CHECKS['privacy']['server_locations']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['privacy']['leaks']['title'] = "Check for unintentional information leaks"
 CHECKS['privacy']['leaks']['short_title'] = 'Unintentional information leaks'
+CHECKS['privacy']['leaks']['frontend_title'] = {
+    'bad': 'No',
+    'good': 'Yes'
+}
 
 CHECKS['security']['header_csp']['title'] = 'Check for presence of Content Security Policy'
 CHECKS['security']['header_csp']['short_title'] = 'Content Security Policy header set'
+CHECKS['security']['header_csp']['frontend_title'] = {
+    'bad': 'Not set',
+    'good': 'Set'
+}
 
 CHECKS['security']['header_xfo']['title'] = 'Check for presence of X-Frame-Options'
 CHECKS['security']['header_xfo']['short_title'] = 'X-Frame-Options header set'
+CHECKS['security']['header_xfo']['frontend_title'] = {
+    'bad': 'Not set',
+    'good': 'Set'
+}
 
 CHECKS['security']['header_xssp']['title'] = "Check for secure XSS Protection"
 CHECKS['security']['header_xssp']['short_title'] = 'Secure XSS Protection header set'
+CHECKS['security']['header_xssp']['frontend_title'] = {
+    'bad': 'Not set',
+    'good': 'Set'
+}
 
 CHECKS['security']['header_xcto']['title'] = "Check for secure X-Content-Type-Options"
 CHECKS['security']['header_xcto']['short_title'] = "Secure X-Content-Type-Options header set"
+CHECKS['security']['header_xcto']['frontend_title'] = {
+    'bad': 'Not set',
+    'good': 'Set'
+}
 
 CHECKS['security']['header_ref']['title'] = "Check for privacy-friendly Referrer Policy"
 CHECKS['security']['header_ref']['short_title'] = 'Referrer Policy header set'
+CHECKS['security']['header_ref']['frontend_title'] = {
+    'bad': 'Not set',
+    'good': 'Set'
+}
 
 CHECKS['ssl']['https_scan_finished']['title'] = 'Check if the Server offers HTTPS'
 CHECKS['ssl']['https_scan_finished']['short_title'] = 'Server offers HTTPS'
+CHECKS['ssl']['https_scan_finished']['frontend_title'] = {
+    'bad': 'Not deployed',
+    'good': 'HTTPS deployed'
+}
 
 CHECKS['ssl']['no_https_by_default_but_same_content_via_https']['title'] = 'Check whether HTTP URL is also reachable via HTTPS'
 CHECKS['ssl']['no_https_by_default_but_same_content_via_https']['short_title'] = 'HTTP URL also reachable via HTTPS'
 
 CHECKS['ssl']['web_cert']['title'] = "Check whether the SSL certificate is valid"
-CHECKS['ssl']['web_cert']['short_title'] = "SSL certificate valid"
+CHECKS['ssl']['web_cert']['short_title'] = "Web Server SSL certificate valid"
+CHECKS['ssl']['web_cert']['frontend_title'] = {
+    'bad': 'Invalid',
+    'good': 'Valid'
+}
 
 CHECKS['ssl']['site_redirects_to_https']['title'] = "Check for automatic redirection to HTTPS"
 CHECKS['ssl']['site_redirects_to_https']['short_title'] = "Automatic HTTPS redirection"
@@ -955,18 +1015,38 @@ CHECKS['ssl']['redirects_from_https_to_http']['short_title'] = "Server prevents 
 
 CHECKS['ssl']['web_pfs']['title'] = "Check if the server offers Perfect Forward Secrecy"
 CHECKS['ssl']['web_pfs']['short_title'] = "Perfect Forward Secrecy offered"
+CHECKS['ssl']['web_pfs']['frontend_title'] = {
+    'bad': 'Not offered',
+    'good': 'Offered'
+}
 
 CHECKS['ssl']['web_hsts_header']['title'] = "Check for valid Strict-Transport-Security (HSTS)"
 CHECKS['ssl']['web_hsts_header']['short_title'] = "Valid Strict-Transport-Security (HSTS)"
+CHECKS['ssl']['web_hsts_header']['frontend_title'] = {
+    'bad': 'Sites not using HSTS',
+    'good': 'Sites using HSTS'
+}
 
 CHECKS['ssl']['web_hsts_header_duration']['title'] = "Check for duration given in HSTS header"
 CHECKS['ssl']['web_hsts_header_duration']['short_title'] = "HSTS header duration sufficient"
+CHECKS['ssl']['web_hsts_header_duration']['frontend_title'] = {
+    'bad': 'Short duration',
+    'good': 'Sufficiently long duration'
+}
 
 CHECKS['ssl']['web_hsts_preload_prepared']['title'] = "Check if server is ready for HSTS preloading"
 CHECKS['ssl']['web_hsts_preload_prepared']['short_title'] = "Server ready for HSTS preloading"
+CHECKS['ssl']['web_hsts_preload_prepared']['frontend_title'] = {
+    'bad': 'Not ready',
+    'good': 'Ready'
+}
 
 CHECKS['ssl']['web_hsts_preload_listed']['title'] = "Check for HSTS Preloading"
-CHECKS['ssl']['web_hsts_preload_listed']['short_title'] = "Inclusion in Chrome HSTS preload list"
+CHECKS['ssl']['web_hsts_preload_listed']['short_title'] = "Included in Chrome HSTS preload list"
+CHECKS['ssl']['web_hsts_preload_listed']['frontend_title'] = {
+    'bad': 'Not included',
+    'good': 'Included'
+}
 
 CHECKS['ssl']['web_has_hpkp_header']['title'] = 'Check for valid Public Key Pins'
 CHECKS['ssl']['web_has_hpkp_header']['short_title'] = 'Valid Public Key Pins'
@@ -977,131 +1057,143 @@ CHECKS['ssl']['mixed_content']['short_title'] = "No Mixed Content on HTTPS sites
 CHECKS['ssl']['web_insecure_protocols_sslv2']['title'] = \
 CHECKS['mx']['mx_insecure_protocols_sslv2']['title'] = "Check that insecure SSL 2.0 is not offered"
 
-CHECKS['ssl']['web_insecure_protocols_sslv2']['short_title'] = "SSL 2.0"
+CHECKS['ssl']['web_insecure_protocols_sslv2']['short_title'] = "Web server supports SSL 2.0"
 CHECKS['mx']['mx_insecure_protocols_sslv2']['short_title'] = "Mail server supports SSL 2.0"
 
 CHECKS['ssl']['web_insecure_protocols_sslv3']['title'] = \
 CHECKS['mx']['mx_insecure_protocols_sslv3']['title'] = "Check that insecure SSL 3.0 is not offered"
 
-CHECKS['ssl']['web_insecure_protocols_sslv3']['short_title'] = "SSL 3.0"
+CHECKS['ssl']['web_insecure_protocols_sslv3']['short_title'] = "Web server supports SSL 3.0"
 CHECKS['mx']['mx_insecure_protocols_sslv3']['short_title'] = "Mail server supports SSL 3.0"
 
 CHECKS['ssl']['web_secure_protocols_tls1']['title'] = \
 CHECKS['mx']['mx_secure_protocols_tls1']['title'] = "Check if legacy TLS 1.0 is offered"
 
-CHECKS['ssl']['web_secure_protocols_tls1']['short_title'] = "Legacy TLS 1.0"
+CHECKS['ssl']['web_secure_protocols_tls1']['short_title'] = "Web server supports Legacy TLS 1.0"
 CHECKS['mx']['mx_secure_protocols_tls1']['short_title'] = "Mail server supports Legacy TLS 1.0"
 
 CHECKS['ssl']['web_secure_protocols_tls1_1']['title'] = \
 CHECKS['mx']['mx_secure_protocols_tls1_1']['title'] = "Check if TLS 1.1 is offered "
 
-CHECKS['ssl']['web_secure_protocols_tls1_1']['short_title'] =  "TLS 1.1"
+CHECKS['ssl']['web_secure_protocols_tls1_1']['short_title'] =  "Web server supports TLS 1.1"
 CHECKS['mx']['mx_secure_protocols_tls1_1']['short_title'] = "Mail server supports TLS 1.1"
 
 CHECKS['ssl']['web_secure_protocols_tls1_2']['title'] = \
 CHECKS['mx']['mx_secure_protocols_tls1_2']['title'] = "Check that TLS 1.2 is offered"
 
-CHECKS['ssl']['web_secure_protocols_tls1_2']['short_title'] = "TLS 1.2"
+CHECKS['ssl']['web_secure_protocols_tls1_2']['short_title'] = "Web server supports TLS 1.2"
 CHECKS['mx']['mx_secure_protocols_tls1_2']['short_title'] = "Mail server supports TLS 1.2"
 
 CHECKS['ssl']['web_vuln_heartbleed']['title'] = \
 CHECKS['mx']['mx_vuln_heartbleed']['title'] = 'Check for protection against Heartbleed'
 
-CHECKS['ssl']['web_vuln_heartbleed']['short_title'] = "Protected against Heartbleed"
+CHECKS['ssl']['web_vuln_heartbleed']['short_title'] = "Web server Protected against Heartbleed"
 CHECKS['mx']['mx_vuln_heartbleed']['short_title'] = "Mail server Protected against Heartbleed"
 
 CHECKS['ssl']['web_vuln_ccs']['title'] = \
 CHECKS['mx']['mx_vuln_ccs']['title'] = "Check for protection against CCS attack"
 
-CHECKS['ssl']['web_vuln_ccs']['short_title'] = "Protected against CCS attack"
+CHECKS['ssl']['web_vuln_ccs']['short_title'] = "Web server Protected against CCS attack"
 CHECKS['mx']['mx_vuln_ccs']['short_title'] = "Mail server Protected against CCS attack"
 
 CHECKS['ssl']['web_vuln_ticketbleed']['title'] = \
 CHECKS['mx']['mx_vuln_ticketbleed']['title'] = "Check for protection against Ticketbleed"
 
-CHECKS['ssl']['web_vuln_ticketbleed']['short_title'] = "Protected against Ticketbleed"
+CHECKS['ssl']['web_vuln_ticketbleed']['short_title'] = "Web server Protected against Ticketbleed"
 CHECKS['mx']['mx_vuln_ticketbleed']['short_title'] = "Mail server Protected against Ticketbleed"
 
 CHECKS['ssl']['web_vuln_secure_renego']['title'] = \
 CHECKS['mx']['mx_vuln_secure_renego']['title'] = "Check for Secure Renegotiation"
 
-CHECKS['ssl']['web_vuln_secure_renego']['short_title'] = "Protected against Secure Renegotiation"
+CHECKS['ssl']['web_vuln_secure_renego']['short_title'] = "Web server Protected against Secure Renegotiation"
 CHECKS['mx']['mx_vuln_secure_renego']['short_title'] = "Mail server Protected against Secure Renegotiation"
 
 CHECKS['ssl']['web_vuln_secure_client_renego']['title'] = \
 CHECKS['mx']['mx_vuln_secure_client_renego']['title'] = "Check for Secure Client-Initiated Renegotiation"
 
-CHECKS['ssl']['web_vuln_secure_client_renego']['short_title'] = "Protected against Secure Client-Initiated Renegotiation"
+CHECKS['ssl']['web_vuln_secure_client_renego']['short_title'] = "Web server Protected against Secure Client-Initiated Renegotiation"
 CHECKS['mx']['mx_vuln_secure_client_renego']['short_title'] = "Mail server Protected against Secure Client-Initiated Renegotiation"
 
 CHECKS['ssl']['web_vuln_crime']['title'] = \
 CHECKS['mx']['mx_vuln_crime']['title'] = "Check for protection against CRIME"
 
-CHECKS['ssl']['web_vuln_crime']['short_title'] = "Protected against CRIME"
+CHECKS['ssl']['web_vuln_crime']['short_title'] = "Web server Protected against CRIME"
 CHECKS['mx']['mx_vuln_crime']['short_title'] = "Mail server Protected against CRIME"
 
 CHECKS['ssl']['web_vuln_breach']['title'] = \
 CHECKS['mx']['mx_vuln_breach']['title'] = "Check for protection against BREACH"
 
-CHECKS['ssl']['web_vuln_breach']['short_title'] = "Protected against BREACH"
+CHECKS['ssl']['web_vuln_breach']['short_title'] = "Web server Protected against BREACH"
 CHECKS['mx']['mx_vuln_breach']['short_title'] = "Mail server Protected against BREACH"
 
 CHECKS['ssl']['web_vuln_poodle']['title'] = \
 CHECKS['mx']['mx_vuln_poodle']['title'] = "Check for protection against POODLE"
 
-CHECKS['ssl']['web_vuln_poodle']['short_title'] = "Protected against POODLE"
+CHECKS['ssl']['web_vuln_poodle']['short_title'] = "Web server Protected against POODLE"
 CHECKS['mx']['mx_vuln_poodle']['short_title'] = "Mail server Protected against POODLE"
 
 CHECKS['ssl']['web_vuln_sweet32']['title'] = \
 CHECKS['mx']['mx_vuln_sweet32']['title'] = "Check for protection against SWEET32"
 
-CHECKS['ssl']['web_vuln_sweet32']['short_title'] = "Protected against SWEET32"
+CHECKS['ssl']['web_vuln_sweet32']['short_title'] = "Web server Protected against SWEET32"
 CHECKS['mx']['mx_vuln_sweet32']['short_title'] = "Mail server Protected against SWEET32"
 
 CHECKS['ssl']['web_vuln_freak']['title'] = \
 CHECKS['mx']['mx_vuln_freak']['title'] = "Check for protection against FREAK"
 
-CHECKS['ssl']['web_vuln_freak']['short_title'] = "Protected against FREAK"
+CHECKS['ssl']['web_vuln_freak']['short_title'] = "Web server Protected against FREAK"
 CHECKS['mx']['mx_vuln_freak']['short_title'] = "Mail server Protected against FREAK"
 
 CHECKS['ssl']['web_vuln_drown']['title'] = \
 CHECKS['mx']['mx_vuln_drown']['title'] = "Check for protection against DROWN"
 
-CHECKS['ssl']['web_vuln_drown']['short_title'] = "Protected against DROWN"
+CHECKS['ssl']['web_vuln_drown']['short_title'] = "Web server Protected against DROWN"
 CHECKS['mx']['mx_vuln_drown']['short_title'] = "Mail server Protected against DROWN"
 
 CHECKS['ssl']['web_vuln_logjam']['title'] = \
 CHECKS['mx']['mx_vuln_logjam']['title'] = "Check for protection against LOGJAM"
 
-CHECKS['ssl']['web_vuln_logjam']['short_title'] = "Protected against LOGJAM"
+CHECKS['ssl']['web_vuln_logjam']['short_title'] = "Web server Protected against LOGJAM"
 CHECKS['mx']['mx_vuln_logjam']['short_title'] = "Mail server Protected against LOGJAM"
 
 CHECKS['ssl']['web_vuln_beast']['title'] = \
 CHECKS['mx']['mx_vuln_beast']['title'] = "Check for protection against BEAST"
 
-CHECKS['ssl']['web_vuln_beast']['short_title'] = "Protected against BEAST"
+CHECKS['ssl']['web_vuln_beast']['short_title'] = "Web server Protected against BEAST"
 CHECKS['mx']['mx_vuln_beast']['short_title'] = "Mail server Protected against BEAST"
 
 CHECKS['ssl']['web_vuln_lucky13']['title'] = \
 CHECKS['mx']['mx_vuln_lucky13']['title'] = "Check for protection against LUCKY13"
 
-CHECKS['ssl']['web_vuln_lucky13']['short_title'] = "Protected against LUCKY13"
+CHECKS['ssl']['web_vuln_lucky13']['short_title'] = "Web server Protected against LUCKY13"
 CHECKS['mx']['mx_vuln_lucky13']['short_title'] = "Mail server Protected against LUCKY13"
 
 CHECKS['ssl']['web_vuln_rc4']['title'] = \
 CHECKS['mx']['mx_vuln_rc4']['title'] = "Check that no RC4 ciphers are used"
 
-CHECKS['ssl']['web_vuln_rc4']['short_title'] = "Insecure RC4 ciphers used"
-CHECKS['mx']['mx_vuln_rc4']['short_title'] = "No RC4 ciphers used"
+CHECKS['ssl']['web_vuln_rc4']['short_title']    = "Insecure RC4 ciphers supported by web server"
+CHECKS['ssl']['web_vuln_rc4']['frontend_title'] = {
+    'bad': 'RC4 ciphers not used',
+    'good': 'RC4 ciphers used'
+}
+CHECKS['mx']['mx_vuln_rc4']['short_title'] = "RC4 ciphers supported by mail server"
 
 CHECKS['ssl']['web_vuln_fallback_scsv']['title'] = \
 CHECKS['mx']['mx_vuln_fallback_scsv']['title'] = "Check that TLS_FALLBACK_SCSV is implemented"
 
-CHECKS['ssl']['web_vuln_fallback_scsv']['short_title'] = "TLS_FALLBACK_SCSV used"
-CHECKS['mx']['mx_vuln_fallback_scsv']['short_title'] = "TLS_FALLBACK_SCSV implemented"
+CHECKS['ssl']['web_vuln_fallback_scsv']['short_title'] = "TLS_FALLBACK_SCSV used by web server"
+CHECKS['ssl']['web_vuln_fallback_scsv']['frontend_title'] = {
+    'bad': 'Not used',
+    'good': 'Used'
+}
+CHECKS['mx']['mx_vuln_fallback_scsv']['short_title'] = "TLS_FALLBACK_SCSV implemented by mail server"
 
 CHECKS['mx']['has_mx']['title'] = "Check if the Domain has an eMail server"
 CHECKS['mx']['has_mx']['short_title'] = "Domain has Mail server"
 
 CHECKS['mx']['mx_scan_finished']['title'] = "Check if the Mail server supports encryption"
 CHECKS['mx']['mx_scan_finished']['short_title'] = "Mail server supports encryption"
+CHECKS['mx']['mx_scan_finished']['frontend_title'] = {
+    'bad': 'Not supported',
+    'good': 'Supported'
+}

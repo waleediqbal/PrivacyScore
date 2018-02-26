@@ -250,9 +250,7 @@ COUNTRY_DICT = {
 	'Virgin Islands, British': 'VG',
 	'Virgin Islands, U.S.': 'VI',
 	'Wallis and Futuna': 'WF',
-	'Western Sahara': 'EH',
 	'Yemen': 'YE',
 	'Zambia': 'ZM',
-	'Zimbabwe': 'ZW',
-	'Aland Islands': 'AX'
+	'Zimbabwe': 'ZW'
 }
