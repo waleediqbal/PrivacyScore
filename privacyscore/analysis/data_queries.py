@@ -580,7 +580,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	if not rules_df.empty:
 		pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
 		result = pruned_rules_df[['antecedent','consequent', 'support','confidence','lift']].groupby('consequent').max().reset_index().sort_values(['support','confidence'], ascending=False)
-		#result.to_csv(os.path.join('/home/sysop/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
+		result.to_csv(os.path.join('/home/sysop/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
 		print(result.to_csv(sep=' ', index=False, header=False))
 	else:
 		print("Unable to generate any rule")
