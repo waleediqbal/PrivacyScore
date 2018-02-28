@@ -505,7 +505,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 
 	df = df.replace(np.nan, '0')
 	#df = df.iloc[:, :-50]
-	df = df.iloc[33000:]
+	df = df.iloc[25000:]
 
 	print("Total rows = ", int(df.shape[0]))
 	print("Total columns = ", int(df.shape[1]))
