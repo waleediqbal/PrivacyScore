@@ -504,8 +504,8 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	df = df.drop('missing_val', axis=1)
 
 	df = df.replace(np.nan, '0')
-	df = df.iloc[:, :-50]
-	df = df.iloc[30000:]
+	#df = df.iloc[:, :-50]
+	df = df.iloc[33000:]
 
 	print("Total rows = ", int(df.shape[0]))
 	print("Total columns = ", int(df.shape[1]))
@@ -515,9 +515,15 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	# 'Inclusion in Chrome HSTS preload list', 'No Mixed Content on HTTPS sites', 'Domain has Mail server', 'Web & mail servers in same country',
 	# 'Mail server supports SSL 2.0', 'SSL 2.0', 'Mail server supports SSL 3.0', 'SSL 3.0']
 
-	# for column in restricted_columns:
-	# 	if column in df.columns:
-	# 		df.drop([column], axis=1, inplace=True)
+	restricted_columns = ['Sites using third party embeds', 'Sites using trackers', 'Sites setting third party cookies',
+	'Unintentional information leaks', 'Content Security Policy header set', 'Referrer Policy header set',
+	'Secure XSS Protection header set', 'Referrer Policy header set', 'Server offers HTTPS', 'Valid Strict-Transport-Security (HSTS)',
+	'Legacy TLS 1.0', 'TLS 1.1', 'TLS 1.2', 'Insecure RC4 ciphers used', 'Mail server supports encryption',
+	'Secure X-Content-Type-Options header set', 'SSL 2.0', 'SSL 3.0']
+
+	for column in df.columns:
+		if column not in restricted_columns:
+			df.drop([column], axis=1, inplace=True)
 	input_assoc_rules = df
 
 	domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
@@ -534,7 +540,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	rules_df = pd.DataFrame()
 	rules = [(P, Q, supp, conf)
 	for P, Q, supp, conf in association_rules(itemsets, confidence)
-		if len(Q) > 1 ]
+		if len(Q) == 1 ]
 
 	print("Step 1: Rules generated")
 
@@ -559,7 +565,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 		#if named_cons in eligible_ante:
 		rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
 		ante_rule = ', '.join(rule_lhs)
-		if ante_rule and len(rule_lhs)>2 :
+		if ante_rule and len(rule_lhs)<3 :
 			rule_dict = {'support' : ex_rule_frm_rule_stat[2],
 			             'confidence' : ex_rule_frm_rule_stat[3],
 		                 'coverage' : ex_rule_frm_rule_stat[4],
@@ -574,7 +580,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 	if not rules_df.empty:
 		pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
 		result = pruned_rules_df[['antecedent','consequent', 'support','confidence','lift']].groupby('consequent').max().reset_index().sort_values(['support','confidence'], ascending=False)
-		result.to_csv(os.path.join('/home/sysop/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
+		#result.to_csv(os.path.join('/home/sysop/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
 		print(result.to_csv(sep=' ', index=False, header=False))
 	else:
 		print("Unable to generate any rule")
