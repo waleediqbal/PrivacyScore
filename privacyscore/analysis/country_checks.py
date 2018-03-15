@@ -42,16 +42,16 @@ def describe_locations(server_type: str, locations: list) -> dict:
                              'be detected.') % {'server_type': server_type},
             'classification': 0
         }
-    rating = 1
+    category = 1
     for country in locations:
         if country not in EU_STATES:
-            rating = 0
+            category = 0
     if len(locations) == 1:
         return {
             'description': _(''), 
-            'classification': rating
+            'classification': category
         }
     return {
         'description': _(''),
-        'classification': rating
+        'classification': category
     }

@@ -184,7 +184,7 @@ def process_site(site_pk: int, analyse_id: int):
     scan_result = ScanResult.objects.get(scan_id=site.last_scan_id)
     site_res = scan_result.result
     if site_res:
-        analysis = site.analyse(site_res, DEFAULT_GROUP_ORDER)[1].items()
+        analysis = site.analyse(site_res, DEFAULT_GROUP_ORDER).items()
         if analysis:
             data = []
             site_data = {}
@@ -197,9 +197,9 @@ def process_site(site_pk: int, analyse_id: int):
                 site_data['mx_country'] = site_res['mx_locations'][0] if len(site_res['mx_locations']) != 0 else None
             else:
                 site_data['mx_country'] = None
-            for group, result in zip(RESULT_GROUPS.values(), analysis):
-                for description, title, rating in result[1]:
-                    site_data[title] = str(rating)
+            for result in analysis:
+                for description, title, category in result[1]:
+                    site_data[title] = str(category)
             data.append(site_data)
             AnalysisCategory.objects.create(
                 analysis_id=analyse_id,
