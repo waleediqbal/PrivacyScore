@@ -16,6 +16,7 @@ class Command(BaseCommand):
 	def add_arguments(self, parser):
 		parser.add_argument('min_support')
 		parser.add_argument('min_confidence')
+		parser.add_argument('with_tls')
 
 	def handle(self, *args, **options):
 		#queries.association_thread(options['min_support'], options['min_confidence'])
@@ -23,4 +24,7 @@ class Command(BaseCommand):
 		if analyse:
 			analyse_cat = analyse.category.values('result')
 			df = json_normalize(analyse_cat, record_path='result')
-			queries.association(df, options['min_support'], options['min_confidence'])
+			if options['with_tls'] == 'Y' or options['with_tls'] == 'yes':
+				queries.association(df, options['min_support'], options['min_confidence'])
+			else:
+				queries.association_without_TLS(df, options['min_support'], options['min_confidence'])

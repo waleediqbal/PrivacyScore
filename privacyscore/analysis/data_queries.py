@@ -6,10 +6,12 @@ import pandas as pd
 import numpy as np
 import Orange
 import os
+import random
 
 import time
 import threading
 
+#from fancyimpute import KNN, MICE
 from Orange.data import Domain, DiscreteVariable, ContinuousVariable
 from orangecontrib.associate.fpgrowth import *
 from tkinter import *
@@ -485,111 +487,204 @@ def web_privacy_results(myList = []) -> OrderedDict:
 	return privacy_groups, google_group
 
 def association(myList = [], min_supp = 0.1, confidence=0.1):
-	df = myList
-	df = df.drop('url', axis=1)
-	df = df.drop('country', axis=1)
-	df = df.drop('mx_country', axis=1)
-	#df = df.replace('None', '0')
-	df = df.replace('None', np.nan)
+    df = myList
+    df = df.drop('url', axis=1)
+    df = df.drop('country', axis=1)
+    df = df.drop('mx_country', axis=1)
+    df = df.replace('None', np.nan)
 
-	#df = df[df['Server offers HTTPS'] == '1']
+    print("Total rows before : ", int(df.shape[0]))
 
-	print("Total rows before : ", int(df.shape[0]))
+    df['missing_val'] = df.isnull().sum(axis=1)
+#       df = df[df['missing_val'] <= np.ceil(df['missing_val'].mean())]
 
-	df['missing_val'] = df.isnull().sum(axis=1)
-	#df = df[df['missing_val'] <= np.ceil(df['missing_val'].mean())]
+    print("Average missing values in each transaction = ", float(np.ceil(df['missing_val'].mean())))
+#       print("Total rows after dropping avg. missing value rows : ", int(df.shape[0]))
+    df = df.drop('missing_val', axis=1)
 
-	print("Average missing values in each transaction = ", float(np.ceil(df['missing_val'].mean())))
-	print("Total rows after dropping avg. missing value rows : ", int(df.shape[0]))
-	df = df.drop('missing_val', axis=1)
+#       df = df.iloc[:, :-30]
+#       df = df.iloc[30000:]
 
-	df = df.replace(np.nan, '0')
-	#df = df.iloc[:, :-50]
-	df = df.iloc[25000:]
+    df =df[(df['Server offers HTTPS'] == '1') & (df['Mail server supports encryption'] == '1')]
 
-	print("Total rows = ", int(df.shape[0]))
-	print("Total columns = ", int(df.shape[1]))
+    restricted_columns = ['Sites setting first party cookies', 'Sites using third party embeds' ,
+    'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
+    'HSTS header duration sufficient', 'Server ready for HSTS preloading', 'Web server Protected against Secure Renegotiation',
+    'Included in Chrome HSTS preload list', 'Web server supports SSL 2.0', 'Web server supports SSL 3.0', 'Web server supports Legacy TLS 1.0',
+    'Web server supports TLS 1.1', 'Web server supports TLS 1.2', 'Mail server supports SSL 3.0', 'Mail server supports SSL 2.0',
+    'Mail server supports Legacy TLS 1.0', 'Mail server supports TLS 1.1', 'Mail server supports TLS 1.2', 'Mail server Protected against Secure Renegotiation',
+    'Mail server Protected against Heartbleed', 'Web server Protected against Heartbleed', 'Web server Protected against BEAST', 'Mail server Protected against BEAST',
+    'Mail server Protected against LOGJAM', 'Web server Protected against LOGJAM', 'Web server Protected against LUCKY13', 'Mail server Protected against LUCKY13',
+    'Mail server Protected against CRIME', 'Web server Protected against CRIME', 'Mail server Protected against CCS attack',
+    'Web server Protected against CCS attack', 'Mail server Protected against DROWN', 'Web server Protected against DROWN',
+    'Mail server Protected against FREAK', 'Web server Protected against FREAK', 'Mail server Protected against BREACH', 'Domain has Mail server',
+    'Mail server Protected against Ticketbleed', 'Web server Protected against Ticketbleed', 'Valid Public Key Pins']
 
-	# restricted_columns = ['Sites setting first party cookies', 'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
-	# 'Automatic HTTPS redirection', 'Server prevents using HTTPS', 'HSTS header duration sufficient', 'Server ready for HSTS preloading',
-	# 'Inclusion in Chrome HSTS preload list', 'No Mixed Content on HTTPS sites', 'Domain has Mail server', 'Web & mail servers in same country',
-	# 'Mail server supports SSL 2.0', 'SSL 2.0', 'Mail server supports SSL 3.0', 'SSL 3.0']
+    for column in restricted_columns:
+            if column in df.columns:
+                    df.drop([column], axis=1, inplace=True)
+    print(df.isnull().sum())
 
-	restricted_columns = ['Sites using third party embeds', 'Sites using trackers', 'Sites setting third party cookies',
-	'Unintentional information leaks', 'Content Security Policy header set', 'Referrer Policy header set',
-	'Secure XSS Protection header set', 'Referrer Policy header set', 'Server offers HTTPS', 'Valid Strict-Transport-Security (HSTS)',
-	'Legacy TLS 1.0', 'TLS 1.1', 'TLS 1.2', 'Insecure RC4 ciphers used', 'Mail server supports encryption',
-	'Secure X-Content-Type-Options header set', 'SSL 2.0', 'SSL 3.0']
+    df = df.apply(lambda x: x.fillna(random.choice(['0', '1'])), axis=1)
 
-	for column in df.columns:
-		if column not in restricted_columns:
-			df.drop([column], axis=1, inplace=True)
-	input_assoc_rules = df
+    input_assoc_rules = df
+    print(df.columns)
 
-	domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
-	data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
-	data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
-	min_support = float(min_supp)
-	print("num of required transactions = ", int(input_assoc_rules.shape[0]*min_support))
-	num_trans = input_assoc_rules.shape[0]*min_support
-	itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
-	print(len(itemsets))
+    print("Total rows = ", int(df.shape[0]))
+    print("Total columns = ", int(df.shape[1]))
 
-	confidence = float(confidence)
+    domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
+    data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
+    data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
+    min_support = float(min_supp)
+    print("num of required transactions = ", int(input_assoc_rules.shape[0]*min_support))
+    num_trans = input_assoc_rules.shape[0]*min_support
+    itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
+    print(len(itemsets))
 
-	rules_df = pd.DataFrame()
-	rules = [(P, Q, supp, conf)
-	for P, Q, supp, conf in association_rules(itemsets, confidence)
-		if len(Q) == 1 ]
+    confidence = float(confidence)
 
-	print("Step 1: Rules generated")
+    rules_df = pd.DataFrame()
+    rules = [(P, Q, supp, conf)
+    for P, Q, supp, conf in association_rules(itemsets, confidence)
+        if len(Q) == 1 and Q]
 
-	names = {item: '{}={}'.format(var.name, val)
-		for item, var, val in OneHot.decode(mapping, data_gro_1, mapping)}
+    restricted_ante = ['Mail server supports SSL 3.0=0', 'Web server supports SSL 3.0=0', 'Web server supports TLS 1.1=1', 'Web server supports TLS 1.2=1',
+    'Mail server supports TLS 1.1=1', 'Mail server supports TLS 1.2=1', 'Mail server Protected against BREACH=1',
+    'Mail server supports Legacy TLS 1.0=1', 'Web server supports Legacy TLS 1.0']
 
-	print("Step 2: Decoded")
+    print("Step 1: Rules generated")
 
-	eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
-	N = input_assoc_rules.shape[0] * 0.5
-	rule_stats = list(rules_stats(rules, itemsets, N))
+    names = {item: '{}={}'.format(var.name, val)
+            for item, var, val in OneHot.decode(mapping, data_gro_1, mapping)}
 
-	print("Step 3: Stats for rules generated")
-	rule_list_df = []
-	for ex_rule_frm_rule_stat in rule_stats:
-		ante = ex_rule_frm_rule_stat[0]
-		cons = ex_rule_frm_rule_stat[1]
-		#named_cons = names[next(iter(cons))]
+    print("Step 2: Decoded")
 
-		named_cons = [names[i] for i in cons if names[i] in eligible_ante]
-		named_cons = ', '.join(named_cons)
-		#if named_cons in eligible_ante:
-		rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
-		ante_rule = ', '.join(rule_lhs)
-		if ante_rule and len(rule_lhs)<3 :
-			rule_dict = {'support' : ex_rule_frm_rule_stat[2],
-			             'confidence' : ex_rule_frm_rule_stat[3],
-		                 'coverage' : ex_rule_frm_rule_stat[4],
-		                 'strength' : ex_rule_frm_rule_stat[5],
-		                 'lift' : ex_rule_frm_rule_stat[6],
-		                 'leverage' : ex_rule_frm_rule_stat[7],
-		                 'antecedent': ante_rule,
-		                 'consequent':named_cons }
-			rule_list_df.append(rule_dict)
-	rules_df = pd.DataFrame(rule_list_df)
-	print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
-	if not rules_df.empty:
-		pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
-		result = pruned_rules_df[['antecedent','consequent', 'support','confidence','lift']].groupby('consequent').max().reset_index().sort_values(['support','confidence'], ascending=False)
-		result.to_csv(os.path.join('/home/sysop/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
-		print(result.to_csv(sep=' ', index=False, header=False))
-	else:
-		print("Unable to generate any rule")
+    eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
+    N = input_assoc_rules.shape[0] * 0.5
+    rule_stats = list(rules_stats(rules, itemsets, N))
 
-def association_thread(min_supp, min_conf):
-	analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
-	if analyse:
-		analyse_cat = analyse.category.values('result')
-		df = json_normalize(analyse_cat, record_path='result')
-		thread = threading.Thread(target=association,args=(df, min_supp, min_conf))
-		thread.daemon = True
-		thread.start()
+    print("Step 3: Stats for rules generated")
+    rule_list_df = []
+
+    rule_list_df = []
+    for ex_rule_frm_rule_stat in rule_stats:
+        ante = ex_rule_frm_rule_stat[0]
+        cons = ex_rule_frm_rule_stat[1]
+        named_cons = names[next(iter(cons))]
+
+        #named_cons = [names[i] for i in cons if names[i] in eligible_ante]
+        #named_cons = ', '.join(named_cons)
+        #if named_cons in eligible_ante:
+        rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
+        ante_rule = ', '.join(rule_lhs)
+        if ante_rule and named_cons not in restricted_ante and len(rule_lhs)>1:
+            rule_dict = {'support' : ex_rule_frm_rule_stat[2],
+                         'confidence' : ex_rule_frm_rule_stat[3],
+                     'lift' : ex_rule_frm_rule_stat[6],
+                     'leverage' : ex_rule_frm_rule_stat[7],
+                     'antecedent': ante_rule,
+                     'consequent':named_cons }
+            rule_list_df.append(rule_dict)
+    rules_df = pd.DataFrame(rule_list_df)
+    print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
+#       rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['support','confidence'], ascending=False).groupby('consequent').head(10).to_csv(sep=' ', index=False, $
+    #print(rules_df.to_csv(sep=' ', index=False, header=False))
+    if not rules_df.empty:
+        #pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
+        #result = rules_df[['antecedent','consequent', 'support','confidence']].groupby('consequent').max().reset_index().sort_values(['support','confidence'], ascending=False)
+        rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['support','confidence'], ascending=False).groupby('consequent').head(10)
+        rules_df.to_csv(os.path.join('/repos/djangoapp/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
+#       print(rules_df.to_csv(sep=' ', index=False, header=False))
+    else:
+        print("Unable to generate any rule")
+
+def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
+    df = myList
+    df = df.drop('url', axis=1)
+    df = df.drop('country', axis=1)
+    df = df.drop('mx_country', axis=1)
+    df = df.replace('None', np.nan)
+
+    print("Total rows before : ", int(df.shape[0]))
+
+    allowed_columns = ['Sites setting third party cookies', 'Sites using trackers', 'Sites using Google Analytics',
+    'Google Analytics privacy extension enabled', 'Web & mail servers in same country',
+    'Content Security Policy header set', 'X-Frame-Options header set', 'Secure XSS Protection header set',
+    'Secure X-Content-Type-Options header set', 'Referrer Policy header set', 'Server offers HTTPS',
+    'Mail server supports encryption']
+
+    for column in df.columns:
+        if column not in allowed_columns:
+                df.drop([column], axis=1, inplace=True)
+    print("Sum of missing values:")
+    print(df.isnull().sum())
+
+    df = df.apply(lambda x: x.fillna(random.choice(['0', '1'])), axis=1)
+
+    input_assoc_rules = df
+    print(df.columns)
+
+    print("Total rows = ", int(df.shape[0]))
+    print("Total columns = ", int(df.shape[1]))
+
+    domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
+    data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
+    data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
+    min_support = float(min_supp)
+    print("num of required transactions = ", int(input_assoc_rules.shape[0]*min_support))
+    num_trans = input_assoc_rules.shape[0]*min_support
+    itemsets = dict(frequent_itemsets(data_gro_1_en, min_support=min_support))
+    print(len(itemsets))
+
+    confidence = float(confidence)
+
+    rules_df = pd.DataFrame()
+    rules = [(P, Q, supp, conf)
+    for P, Q, supp, conf in association_rules(itemsets, confidence)
+        if len(Q) == 1 and Q]
+
+    restricted_ante = ['Mail server supports encryption=1', 'Server offers HTTPS=1']
+
+    print("Step 1: Rules generated")
+
+    names = {item: '{}={}'.format(var.name, val)
+            for item, var, val in OneHot.decode(mapping, data_gro_1, mapping)}
+
+    print("Step 2: Decoded")
+
+    eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
+    N = input_assoc_rules.shape[0] * 0.5
+    rule_stats = list(rules_stats(rules, itemsets, N))
+
+    print("Step 3: Stats for rules generated")
+    rule_list_df = []
+
+    rule_list_df = []
+    for ex_rule_frm_rule_stat in rule_stats:
+        ante = ex_rule_frm_rule_stat[0]
+        cons = ex_rule_frm_rule_stat[1]
+        named_cons = names[next(iter(cons))]
+
+        #named_cons = [names[i] for i in cons if names[i] in eligible_ante]
+        #named_cons = ', '.join(named_cons)
+        #if named_cons in eligible_ante:
+        rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
+        ante_rule = ', '.join(rule_lhs)
+        if ante_rule and named_cons not in restricted_ante and len(rule_lhs)>1:
+            rule_dict = {'support' : ex_rule_frm_rule_stat[2],
+                         'confidence' : ex_rule_frm_rule_stat[3],
+                     'antecedent': ante_rule,
+                     'consequent':named_cons }
+            rule_list_df.append(rule_dict)
+    rules_df = pd.DataFrame(rule_list_df)
+
+    print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
+
+    if not rules_df.empty:
+        rules_df = rules_df[['antecedent','consequent', 'support','confidence']].sort_values(['support','confidence'], ascending=False).groupby('consequent').head(10)
+        #rules_df.to_csv(os.path.join('/repos/djangoapp/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
+        #result.to_csv(os.path.join('/home/waleed/Desktop', "association_"+time.ctime()+".csv") , sep='\t', index=False, encoding='utf-8')
+        print(rules_df.to_csv(sep=' ', index=False, header=False))
+    else:
+        print("Unable to generate any rule")
