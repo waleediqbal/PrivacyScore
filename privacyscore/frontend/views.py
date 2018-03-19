@@ -1108,6 +1108,7 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
         country_form = CountryForm
 
         if ('country' in request.GET) and request.GET['country']!="":
+            country_form = CountryForm(request.GET)
             country_groups = OrderedDict()
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
@@ -1127,7 +1128,6 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
         web_count = df1.shape[0]
 
         result = df
-        #countries with most issues in each category
         ssl_detailed_list, web_vulnerabilities, hsts_groups, valid_hsts, hsts_included_data, https_data, other_checks, security_groups = queries.enc_web_results(result)
 
     return render(request, 'frontend/enc_web_dashboard.html', {
@@ -1165,6 +1165,7 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
         country_form = CountryForm
 
         if ('country' in request.GET) and request.GET['country']!="":
+            country_form = CountryForm(request.GET)
             country_groups = OrderedDict()
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
