@@ -710,7 +710,7 @@ def enc_web_trends(myList = []) -> OrderedDict:
 			df = pd.read_json(data.result)
 			query = df[df['check'] == check]
 			percentage.append(query['percentage'].values[0])
-			total_sites.append(len(data.analysis.category.values('result')))
+			#total_sites.append(len(data.analysis.category.values('result')))
 			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year) 
 			analysis_dates.append(date)
 		ssl_data[check] = percentage
@@ -726,7 +726,7 @@ def enc_web_trends(myList = []) -> OrderedDict:
 			df = pd.read_json(data.result)
 			query = df[df['check'] == check]
 			percentage.append(query['percentage'].values[0])
-			total_sites.append(len(data.analysis.category.values('result')))
+			#total_sites.append(len(data.analysis.category.values('result')))
 			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year) 
 			analysis_dates.append(date)
 		security_data[check] = percentage
