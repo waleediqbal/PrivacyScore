@@ -507,12 +507,11 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 
     df =df[(df['Server offers HTTPS'] == '1') & (df['Mail server supports encryption'] == '1')]
 
-    restricted_columns = ['Sites setting first party cookies', 'Sites using third party embeds' ,
+    restricted_columns = ['Sites setting first party cookies', 'Sites setting third party cookies' ,
     'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
     'HSTS header duration sufficient', 'Server ready for HSTS preloading', 'Web server Protected against Secure Renegotiation',
-    'Included in Chrome HSTS preload list', 'Web server supports SSL 2.0', 'Web server supports SSL 3.0', 'Web server supports Legacy TLS 1.0',
-    'Web server supports TLS 1.1', 'Web server supports TLS 1.2', 'Mail server supports SSL 3.0', 'Mail server supports SSL 2.0',
-    'Mail server supports Legacy TLS 1.0', 'Mail server supports TLS 1.1', 'Mail server supports TLS 1.2', 'Mail server Protected against Secure Renegotiation',
+    'Included in Chrome HSTS preload list', 'Web server supports SSL 2.0', 'Server offers HTTPS', 'Mail server supports encryption',
+    'Mail server supports SSL 2.0', 'Mail server Protected against Secure Renegotiation',
     'Mail server Protected against Heartbleed', 'Web server Protected against Heartbleed', 'Web server Protected against BEAST', 'Mail server Protected against BEAST',
     'Mail server Protected against LOGJAM', 'Web server Protected against LOGJAM', 'Web server Protected against LUCKY13', 'Mail server Protected against LUCKY13',
     'Mail server Protected against CRIME', 'Web server Protected against CRIME', 'Mail server Protected against CCS attack',
@@ -532,6 +531,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 
     print("Total rows = ", int(df.shape[0]))
     print("Total columns = ", int(df.shape[1]))
+    total_rows = int(df.shape[0])
 
     domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
     data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
@@ -561,7 +561,8 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
     print("Step 2: Decoded")
 
     eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
-    N = input_assoc_rules.shape[0] * 0.5
+    N = input_assoc_rules.shape[0]
+    print(N)
     rule_stats = list(rules_stats(rules, itemsets, N))
 
     print("Step 3: Stats for rules generated")
@@ -582,7 +583,6 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
             rule_dict = {'support' : ex_rule_frm_rule_stat[2],
                          'confidence' : ex_rule_frm_rule_stat[3],
                      'lift' : ex_rule_frm_rule_stat[6],
-                     'leverage' : ex_rule_frm_rule_stat[7],
                      'antecedent': ante_rule,
                      'consequent':named_cons }
             rule_list_df.append(rule_dict)
@@ -591,11 +591,13 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
 #       rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['support','confidence'], ascending=False).groupby('consequent').head(10).to_csv(sep=' ', index=False, $
     #print(rules_df.to_csv(sep=' ', index=False, header=False))
     if not rules_df.empty:
+        rules_df['support'] = rules_df['support'].apply(lambda x: x/total_rows)
+        rules_df = rules_df[rules_df['lift']>= 1]
         #pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
-        #result = rules_df[['antecedent','consequent', 'support','confidence']].groupby('consequent').max().reset_index().sort_values(['support','confidence'], ascending=False)
-        rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['support','confidence'], ascending=False).groupby('consequent').head(10)
+        rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False)
+#        rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['lift'], ascending=False).groupby('consequent').head(10)
         rules_df.to_csv(os.path.join('/repos/djangoapp/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
-#       print(rules_df.to_csv(sep=' ', index=False, header=False))
+#        print(rules_df.to_csv(sep=' ', index=False, header=False))
     else:
         print("Unable to generate any rule")
 
@@ -608,11 +610,11 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
 
     print("Total rows before : ", int(df.shape[0]))
 
-    allowed_columns = ['Sites setting third party cookies', 'Sites using trackers', 'Sites using Google Analytics',
+    allowed_columns = ['Sites using third party embeds', 'Sites using trackers', 'Sites using Google Analytics',
     'Google Analytics privacy extension enabled', 'Web & mail servers in same country',
     'Content Security Policy header set', 'X-Frame-Options header set', 'Secure XSS Protection header set',
     'Secure X-Content-Type-Options header set', 'Referrer Policy header set', 'Server offers HTTPS',
-    'Mail server supports encryption']
+    'Mail server supports encryption', 'Unintentional information leaks']
 
     for column in df.columns:
         if column not in allowed_columns:
@@ -625,8 +627,12 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
     input_assoc_rules = df
     print(df.columns)
 
+#    file_df = pd.read_csv(os.path.join('/repos/djangoapp/', "association_Sun_Mar.csv") , sep='\t')
+ #   print(file_df.to_csv(sep=' ', index=False))
+
     print("Total rows = ", int(df.shape[0]))
     print("Total columns = ", int(df.shape[1]))
+    total_rows = int(df.shape[0])
 
     domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
     data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
@@ -654,7 +660,8 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
     print("Step 2: Decoded")
 
     eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
-    N = input_assoc_rules.shape[0] * 0.5
+    N = input_assoc_rules.shape[0]
+    print(N)
     rule_stats = list(rules_stats(rules, itemsets, N))
 
     print("Step 3: Stats for rules generated")
@@ -671,9 +678,10 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
         #if named_cons in eligible_ante:
         rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
         ante_rule = ', '.join(rule_lhs)
-        if ante_rule and named_cons not in restricted_ante and len(rule_lhs)>1:
+        if ante_rule and named_cons not in restricted_ante and len(rule_lhs)>0:
             rule_dict = {'support' : ex_rule_frm_rule_stat[2],
                          'confidence' : ex_rule_frm_rule_stat[3],
+                         'lift' : ex_rule_frm_rule_stat[6],
                      'antecedent': ante_rule,
                      'consequent':named_cons }
             rule_list_df.append(rule_dict)
@@ -682,10 +690,13 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
     print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
 
     if not rules_df.empty:
-        rules_df = rules_df[['antecedent','consequent', 'support','confidence']].sort_values(['support','confidence'], ascending=False).groupby('consequent').head(10)
-        #rules_df.to_csv(os.path.join('/repos/djangoapp/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
-        #result.to_csv(os.path.join('/home/waleed/Desktop', "association_"+time.ctime()+".csv") , sep='\t', index=False, encoding='utf-8')
-        print(rules_df.to_csv(sep=' ', index=False, header=False))
+        rules_df['support'] = rules_df['support'].apply(lambda x: x/total_rows)
+        rules_df = rules_df[rules_df['lift']>= 1]
+#        rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False).groupby('consequent').head(10)
+        rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False)
+#        print(pd.merge(rules_df, file_df, how='inner', on=['antecedent', 'consequent']).to_csv(sep=' ', index=False))
+        rules_df.to_csv(os.path.join('/repos/djangoapp/', "asso_without_tls"+time.ctime()+".csv") , sep='\t', index=False)
+#        print(rules_df.to_csv(sep=' ', index=False, header=False))
     else:
         print("Unable to generate any rule")
 
