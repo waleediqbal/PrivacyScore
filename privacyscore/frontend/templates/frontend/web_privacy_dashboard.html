@@ -33,6 +33,14 @@
                     <div id="tracking_inner"></div>
                 </div>
             </div>
+            <div class="col-md-6 panel panel-default" style="float:left; width:49%; margin-right: 1%;">
+                <div class="text-center panel-heading"><h3>Privacy Checks Trend</h3></div>
+                <div id="privacy_trend_container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+            </div>
+            <div class="col-md-6 panel panel-default" style="float:left; width:49%; margin-left: 1%;">
+                <div class="text-center panel-heading"><h3>Privacy Checks Trend</h3></div>
+                <div id="privacy_trend_container_1" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+            </div>
 <!--             <div class="col-md-12 panel panel-default" style="height: 360px; width:100%; float:left; margin-right: 1%;">
                 <div class="text-center panel-heading"><h3>Google Analytics Checks</h3></div>
                 <div id="google_inner" style="padding: 10px; min-width: 310px; height: 350px; margin: 0 auto">
@@ -197,7 +205,97 @@
                     //             }
                     //         }
                     //     });
+                    //{% endfor %}
+                    var series_data = []
+
+                    {% for group, val in privacy_trends.items %}
+                        series_data.push({
+                            name: "{{ group|safe }}",
+                            data: {{ val|safe }}
+                        });
                     {% endfor %}
+                    Highcharts.chart('privacy_trend_container', {
+                        chart: {
+                            type: 'column'
+                        },
+                        title: {
+                            text: ''
+                        },
+                        xAxis: [{
+                            categories: {{ analysis_dates|safe }},
+                            crosshair: true
+                        }],
+                        yAxis: {
+                            min: 0,
+                            title: {
+                                text: 'Percentage'
+                            }
+                        },
+                        credits: {
+                            enabled: false
+                        },
+                        plotOptions: {
+                            column: {
+                                dataLabels: {
+                                    enabled: true,
+                                    crop: false,
+                                    overflow: 'none'
+                                },
+                                pointPadding: 0.2,
+                                borderWidth: 0
+                            }
+                        },
+                        tooltip: {
+                            shared: true,
+                            useHTML: true
+                        },
+                        series: series_data
+                    });
+                    var series_data = []
+
+                    {% for group, val in privacy_trends_1.items %}
+                        series_data.push({
+                            name: "{{ group|safe }}",
+                            data: {{ val|safe }}
+                        });
+                    {% endfor %}
+                    Highcharts.chart('privacy_trend_container_1', {
+                        chart: {
+                            type: 'column'
+                        },
+                        title: {
+                            text: ''
+                        },
+                        xAxis: [{
+                            categories: {{ analysis_dates|safe }},
+                            crosshair: true
+                        }],
+                        yAxis: {
+                            min: 0,
+                            title: {
+                                text: 'Percentage'
+                            }
+                        },
+                        credits: {
+                            enabled: false
+                        },
+                        plotOptions: {
+                            column: {
+                                dataLabels: {
+                                    enabled: true,
+                                    crop: false,
+                                    overflow: 'none'
+                                },
+                                pointPadding: 0.2,
+                                borderWidth: 0
+                            }
+                        },
+                        tooltip: {
+                            shared: true,
+                            useHTML: true
+                        },
+                        series: series_data
+                    });
                 }
             </script>
         </div>

@@ -703,8 +703,14 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
 def enc_web_trends(myList = []) -> OrderedDict:
 	ssl_support = []
 	security_checks = []
+	hsts_checks = []
+	web_vul_checks = []
 	ssl_data = OrderedDict()
 	security_data = OrderedDict()
+	other_data = OrderedDict()
+	https_data = OrderedDict()
+	web_vul_data = OrderedDict()
+	web_vul_data_1 = OrderedDict()
 
 	ssl_support_keys = ['web_insecure_protocols_sslv2', 'web_insecure_protocols_sslv3', 
 	'web_secure_protocols_tls1', 'web_secure_protocols_tls1_1', 'web_secure_protocols_tls1_2']
@@ -722,8 +728,9 @@ def enc_web_trends(myList = []) -> OrderedDict:
 			query = df[df['check'] == check]
 			percentage.append(query['percentage'].values[0])
 			#total_sites.append(len(data.analysis.category.values('result')))
-			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year) 
+			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
 			analysis_dates.append(date)
+		check = check.replace('Web server supports ', '')
 		ssl_data[check] = percentage
 	###############################################################################################
 	security_checks_keys = ['header_csp', 'header_xfo', 'header_xssp', 'header_xcto', 'header_ref']
@@ -732,14 +739,167 @@ def enc_web_trends(myList = []) -> OrderedDict:
 
 	for check in security_checks:
 		percentage = []
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+		security_data[check] = percentage
+	###############################################################################################
+	valid_hsts_keys = ['web_hsts_header', 'web_cert', 'web_pfs', 'web_vuln_rc4', 'web_vuln_fallback_scsv']
+	for key in valid_hsts_keys:
+		hsts_checks.append(CHECKS['ssl'][key]['short_title'])
+
+	for check in hsts_checks:
+		percentage = []
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+		other_data[check] = percentage
+	##############################################################################################
+	percentage = []
+	for data in time_data:
+		df = pd.read_json(data.result)
+		query = df[df['check'] == 'Server offers HTTPS']
+		percentage.append(query['percentage'].values[0])
+	https_data['Server offers HTTPS'] = percentage
+	##############################################################################################
+	web_vul_keys = ['web_vuln_breach', 'web_vuln_poodle', 'web_vuln_sweet32',
+	'web_vuln_freak', 'web_vuln_drown', 'web_vuln_logjam']
+	for key in web_vul_keys:
+		web_vul_checks.append(CHECKS['ssl'][key]['short_title'])
+
+	for check in web_vul_checks:
+		percentage = []
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+		check = check.replace('Web server ', '')
+		web_vul_data[check] = percentage
+
+	web_vul_checks = []
+	web_vul_keys = ['web_vuln_heartbleed', 'web_vuln_ccs', 'web_vuln_ticketbleed', 'web_vuln_secure_renego',
+	'web_vuln_secure_client_renego', 'web_vuln_crime']
+	for key in web_vul_keys:
+		web_vul_checks.append(CHECKS['ssl'][key]['short_title'])
+
+	for check in web_vul_checks:
+		percentage = []
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+		check = check.replace('Web server ', '')
+		web_vul_data_1[check] = percentage
+
+	return ssl_data, analysis_dates, security_data, other_data, https_data, web_vul_data, web_vul_data_1
+
+def enc_mail_trends(myList = []) -> OrderedDict:
+	ssl_support = []
+	https_data = OrderedDict()
+	ssl_data = OrderedDict()
+	web_vul_data = OrderedDict()
+	web_vul_data_1 = OrderedDict()
+	time_data = AnalysisTimeSeries.objects.all().order_by('id')
+
+	percentage = []
+	for data in time_data:
+		df = pd.read_json(data.result)
+		query = df[df['check'] == 'Mail server supports encryption']
+		query1 = df[df['check'] == 'Domain has Mail server']
+		print(query)
+		print(query1)
+		final_val = round((query['count'].values[0] / query1['count'].values[0]) * 100, 1)
+		percentage.append(final_val)
+	https_data['Mail server supports encryption'] = percentage
+	#################################################################################################
+	ssl_support_keys = ['mx_insecure_protocols_sslv2', 'mx_insecure_protocols_sslv3', 'mx_secure_protocols_tls1',
+	'mx_secure_protocols_tls1_1', 'mx_secure_protocols_tls1_2']
+	for key in ssl_support_keys:
+		ssl_support.append(CHECKS['mx'][key]['short_title'])
+
+	for check in ssl_support:
+		percentage = []
+		total_sites = []
+		analysis_dates = []
 
 		for data in time_data:
 			df = pd.read_json(data.result)
 			query = df[df['check'] == check]
 			percentage.append(query['percentage'].values[0])
-			#total_sites.append(len(data.analysis.category.values('result')))
-			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year) 
+			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
 			analysis_dates.append(date)
-		security_data[check] = percentage
-	print(security_data)
-	return ssl_data, analysis_dates, security_data
+		check = check.replace('Mail server supports ', '')
+		ssl_data[check] = percentage
+	###############################################################################################
+	web_vul_checks = []
+	web_vul_keys = ['mx_vuln_heartbleed', 'mx_vuln_ccs', 'mx_vuln_ticketbleed', 'mx_vuln_secure_renego',
+	'mx_vuln_secure_client_renego', 'mx_vuln_crime']
+	for key in web_vul_keys:
+		web_vul_checks.append(CHECKS['mx'][key]['short_title'])
+
+	for check in web_vul_checks:
+		percentage = []
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+		check = check.replace('Mail server ', '')
+		web_vul_data[check] = percentage
+
+	web_vul_checks = []
+	web_vul_keys = ['mx_vuln_breach', 'mx_vuln_poodle', 'mx_vuln_sweet32',
+	'mx_vuln_freak', 'mx_vuln_drown', 'mx_vuln_logjam']
+	for key in web_vul_keys:
+		web_vul_checks.append(CHECKS['mx'][key]['short_title'])
+
+	for check in web_vul_checks:
+		percentage = []
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+		check = check.replace('Mail server ', '')
+		web_vul_data_1[check] = percentage
+
+	return ssl_data, analysis_dates, https_data, web_vul_data, web_vul_data_1
+
+def privacy_trends(myList = []) -> OrderedDict:
+	privacy_checks = []
+	privacy_data = OrderedDict()
+	privacy_data_1 = OrderedDict()
+	time_data = AnalysisTimeSeries.objects.all().order_by('id')
+
+	embeds_keys = ['third_parties', 'third_party-trackers', 'cookies_3rd_party',
+	'cookies_1st_party']
+	for key in embeds_keys:
+		privacy_checks.append(CHECKS['privacy'][key]['short_title'])
+
+	for check in privacy_checks:
+		percentage = []
+		total_sites = []
+		analysis_dates = []
+
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
+			analysis_dates.append(date)
+		privacy_data[check] = percentage
+	###############################################################################################
+	other_keys = ['google_analytics_present', 'google_analytics_anonymizeIP_not_set', 'server_locations', 'leaks']
+	privacy_checks = []
+	for key in other_keys:
+		privacy_checks.append(CHECKS['privacy'][key]['short_title'])
+
+	for check in privacy_checks:
+		percentage = []
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+		privacy_data_1[check] = percentage
+
+	return privacy_data, privacy_data_1, analysis_dates

@@ -1129,7 +1129,7 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
 
         result = df
         ssl_detailed_list, web_vulnerabilities, hsts_groups, valid_hsts, hsts_included_data, https_data, other_checks, security_groups = queries.enc_web_results(result)
-        ssl_trends, analysis_dates, security_trends = queries.enc_web_trends()
+        ssl_trends, analysis_dates, security_trends, other_trends, https_trends, web_vul_trends, web_vul_trends_1 = queries.enc_web_trends()
 
     return render(request, 'frontend/enc_web_dashboard.html', {
         'ssl_list' : ssl_detailed_list,
@@ -1141,10 +1141,13 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
         'other_checks': other_checks,
         'security_groups': security_groups,
         'country_json': country_json,
-        'sites_count': web_count,
         'ssl_trends' : ssl_trends,
         'security_trends': security_trends,
         'analysis_dates' : analysis_dates,
+        'other_trends': other_trends,
+        'https_trends': https_trends,
+        'web_vul_trends': web_vul_trends,
+        'web_vul_trends_1': web_vul_trends_1,
         'last_analysis': analyse.end,
         'country_form': country_form
     })
@@ -1154,7 +1157,7 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
     sss = analyse.category.values('result')
 
     df = json_normalize(sss, record_path='result')
-    print(df.apply(pd.value_counts).fillna(0))
+#    print(df.apply(pd.value_counts).fillna(0))
     if analyse:
         df_country = df['mx_country']
         countries = list(set(df_country))
@@ -1189,6 +1192,7 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
         country_json = country_count.to_json(orient='records')
 
         mx_enc_support, tls_group, vul_group = queries.enc_mail_results(result)
+        ssl_trends, analysis_dates, https_trends, web_vul_trends, web_vul_trends_1 = queries.enc_mail_trends()
 
     return render(request, 'frontend/enc_mail_dashboard.html', {
         'mx_enc_support' : mx_enc_support,
@@ -1197,7 +1201,12 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
         'country_json': country_json,
         'sites_count': web_count,
         'last_analysis': analyse.end,
-        'country_form': country_form
+        'country_form': country_form,
+        'ssl_trends': ssl_trends,
+        'analysis_dates': analysis_dates,
+        'https_trends': https_trends,
+        'web_vul_trends': web_vul_trends,
+        'web_vul_trends_1': web_vul_trends_1
     })
 
 def web_privacy_dashboard(request: HttpRequest) -> HttpResponse:
@@ -1232,12 +1241,16 @@ def web_privacy_dashboard(request: HttpRequest) -> HttpResponse:
 
         result = df
         web_privacy, google_group = queries.web_privacy_results(result)
+        privacy_trends, privacy_trends_1, analysis_dates = queries.privacy_trends()
 
     return render(request, 'frontend/web_privacy_dashboard.html', {
         'web_privacy': web_privacy,
         'google_group': google_group,
         'last_analysis': analyse.end,
-        'country_form': country_form
+        'country_form': country_form,
+        'privacy_trends': privacy_trends,
+        'privacy_trends_1': privacy_trends_1,
+        'analysis_dates': analysis_dates
     })
 
 def scan_list_analysis(request: HttpRequest, scan_list_id: int) -> HttpResponse:
