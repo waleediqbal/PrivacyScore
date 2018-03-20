@@ -298,7 +298,7 @@ def enc_web_results(myList = []) -> OrderedDict:
 
 	web_vul_keys = ['web_vuln_heartbleed', 'web_vuln_ccs', 'web_vuln_ticketbleed', 'web_vuln_secure_renego',
 	'web_vuln_secure_client_renego', 'web_vuln_crime', 'web_vuln_breach', 'web_vuln_poodle', 'web_vuln_sweet32',
-	'web_vuln_freak', 'web_vuln_drown', 'web_vuln_logjam', 'web_vuln_beast', 'web_vuln_lucky13']
+	'web_vuln_freak', 'web_vuln_drown', 'web_vuln_logjam']
 	for key in web_vul_keys:
 		web_vul.append(CHECKS['ssl'][key]['short_title'])
 
@@ -443,7 +443,7 @@ def enc_mail_results(myList = []) -> OrderedDict:
 	vul_checks = []
 	vul_keys = ['mx_vuln_heartbleed', 'mx_vuln_ccs', 'mx_vuln_ticketbleed', 'mx_vuln_secure_renego',
 	'mx_vuln_secure_client_renego', 'mx_vuln_crime', 'mx_vuln_breach', 'mx_vuln_poodle', 'mx_vuln_sweet32',
-	'mx_vuln_freak', 'mx_vuln_drown', 'mx_vuln_logjam', 'mx_vuln_beast', 'mx_vuln_lucky13']
+	'mx_vuln_freak', 'mx_vuln_drown', 'mx_vuln_logjam']
 
 	for key in vul_keys:
 		vul_checks.append(CHECKS['mx'][key]['short_title'])

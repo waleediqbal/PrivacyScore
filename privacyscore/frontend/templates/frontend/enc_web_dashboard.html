@@ -80,9 +80,11 @@
 			    <div id="map_container"></div>
 			</div>
 			<div class="col-md-12 panel panel-default">
+				<div class="text-center panel-heading"><h3>SSL/TLS Trend</h3></div>
 				<div id="ssl_trend_container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
 			</div>
 			<div class="col-md-12 panel panel-default">
+				<div class="text-center panel-heading"><h3>Header Checks Trend</h3></div>
 				<div id="security_trend_container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
 			</div>
 			<script>
@@ -133,7 +135,7 @@
                             enabled: false
                         },
                         tooltip: {
-							pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b>({point.percentage:.0f}%)<br/>',
+							pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b>({point.percentage:.1f}%)<br/>',
 							footerFormat: 'Total: <b>{point.total}</b>',
 							shared: true
 					    },
@@ -142,10 +144,6 @@
                                 name: 'Not supported',
                                 data: {{ ssl_list.2|safe }}
                             },
-                            // {
-                            //     name: 'Neutral',
-                            //     data: {{ ssl_list.3|safe }}
-                            // },
                             {
                                 name: 'Supported',
                                 data: {{ ssl_list.1|safe }}
@@ -199,7 +197,7 @@
                             enabled: false
                         },
                         tooltip: {
-							pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b>({point.percentage:.0f}%)<br/>',
+							pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b>({point.percentage:.1f}%)<br/>',
 							footerFormat: 'Total: <b>{point.total}</b>',
 							shared: true
 					    },
@@ -683,7 +681,7 @@
 					        type: 'column'
 					    },
 					    title: {
-					        text: 'SSL/TLS Support Trend'
+					        text: ''
 					    },
 					    xAxis: [{
 					        categories: {{ analysis_dates|safe }},
@@ -700,6 +698,11 @@
 					    },
 					    plotOptions: {
 					        column: {
+								dataLabels: {
+								    enabled: true,
+									crop: false,
+									overflow: 'none'
+				            },
 					            pointPadding: 0.2,
 					            borderWidth: 0
 					        }
@@ -723,7 +726,7 @@
 					        type: 'column'
 					    },
 					    title: {
-					        text: 'Header Checks Trend'
+					        text: ''
 					    },
 					    xAxis: [{
 					        categories: {{ analysis_dates|safe }},
@@ -740,6 +743,11 @@
 					    },
 					    plotOptions: {
 					        column: {
+								dataLabels: {
+				                    enabled: true,
+				                    crop: false,
+				                    overflow: 'none'
+				                },
 					            pointPadding: 0.2,
 					            borderWidth: 0
 					        }
