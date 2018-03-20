@@ -19,7 +19,6 @@ class Command(BaseCommand):
 		parser.add_argument('with_tls')
 
 	def handle(self, *args, **options):
-		#queries.association_thread(options['min_support'], options['min_confidence'])
 		analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
 		if analyse:
 			analyse_cat = analyse.category.values('result')

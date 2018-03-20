@@ -79,6 +79,12 @@
 				<div class="text-center panel-heading"><h3>Web Servers Distribution Around The World</h3></div>
 			    <div id="map_container"></div>
 			</div>
+			<div class="col-md-12 panel panel-default">
+				<div id="ssl_trend_container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+			</div>
+			<div class="col-md-12 panel panel-default">
+				<div id="security_trend_container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+			</div>
 			<script>
 				window.onload = function () {
 					var container_bar = document.getElementById("container");
@@ -664,6 +670,86 @@
 				            }
 				        }]
 				    });
+				    var series_data = []
+
+				    {% for group, val in ssl_trends.items %}
+				    	series_data.push({
+					    	name: "{{ group|safe }}",
+					    	data: {{ val|safe }}
+					    });
+				    {% endfor %}
+				    Highcharts.chart('ssl_trend_container', {
+					    chart: {
+					        type: 'column'
+					    },
+					    title: {
+					        text: 'SSL/TLS Support Trend'
+					    },
+					    xAxis: [{
+					        categories: {{ analysis_dates|safe }},
+					        crosshair: true
+					    }],
+					    yAxis: {
+					        min: 0,
+					        title: {
+					            text: 'Percentage'
+					        }
+					    },
+					    credits: {
+					    	enabled: false
+					    },
+					    plotOptions: {
+					        column: {
+					            pointPadding: 0.2,
+					            borderWidth: 0
+					        }
+					    },
+					    tooltip: {
+					        shared: true,
+					        useHTML: true
+					    },
+					    series: series_data
+					});
+				    var series_data = []
+
+				    {% for group, val in security_trends.items %}
+				    	series_data.push({
+					    	name: "{{ group|safe }}",
+					    	data: {{ val|safe }}
+					    });
+				    {% endfor %}
+				    Highcharts.chart('security_trend_container', {
+					    chart: {
+					        type: 'column'
+					    },
+					    title: {
+					        text: 'Header Checks Trend'
+					    },
+					    xAxis: [{
+					        categories: {{ analysis_dates|safe }},
+					        crosshair: true
+					    }],
+					    yAxis: {
+					        min: 0,
+					        title: {
+					            text: 'Percentage'
+					        }
+					    },
+					    credits: {
+					    	enabled: false
+					    },
+					    plotOptions: {
+					        column: {
+					            pointPadding: 0.2,
+					            borderWidth: 0
+					        }
+					    },
+					    tooltip: {
+					        shared: true,
+					        useHTML: true
+					    },
+					    series: series_data
+					});
                 }
             </script>
         </div>

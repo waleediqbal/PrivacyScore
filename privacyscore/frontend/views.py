@@ -1129,6 +1129,7 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
 
         result = df
         ssl_detailed_list, web_vulnerabilities, hsts_groups, valid_hsts, hsts_included_data, https_data, other_checks, security_groups = queries.enc_web_results(result)
+        ssl_trends, analysis_dates, security_trends = queries.enc_web_trends()
 
     return render(request, 'frontend/enc_web_dashboard.html', {
         'ssl_list' : ssl_detailed_list,
@@ -1141,6 +1142,9 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
         'security_groups': security_groups,
         'country_json': country_json,
         'sites_count': web_count,
+        'ssl_trends' : ssl_trends,
+        'security_trends': security_trends,
+        'analysis_dates' : analysis_dates,
         'last_analysis': analyse.end,
         'country_form': country_form
     })

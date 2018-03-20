@@ -20,7 +20,7 @@ from collections import OrderedDict
 from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
 from privacyscore.analysis.default_checks import CHECKS
 from privacyscore.analysis.frontend_data import donut_chart, column_chart, donut_chart_single
-from privacyscore.backend.models import Scan, ScanList, Site, ScanResult, Analysis, AnalysisCategory
+from privacyscore.backend.models import Scan, ScanList, Site, ScanResult, Analysis, AnalysisCategory, AnalysisTimeSeries
 from pandas.io.json import json_normalize
 
 #countries with most issues in each category
@@ -688,3 +688,47 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
         print(rules_df.to_csv(sep=' ', index=False, header=False))
     else:
         print("Unable to generate any rule")
+
+def enc_web_trends(myList = []) -> OrderedDict:
+	ssl_support = []
+	security_checks = []
+	ssl_data = OrderedDict()
+	security_data = OrderedDict()
+
+	ssl_support_keys = ['web_insecure_protocols_sslv2', 'web_insecure_protocols_sslv3', 
+	'web_secure_protocols_tls1', 'web_secure_protocols_tls1_1', 'web_secure_protocols_tls1_2']
+	for key in ssl_support_keys:
+		ssl_support.append(CHECKS['ssl'][key]['short_title'])
+
+	time_data = AnalysisTimeSeries.objects.all().order_by('id')
+	for check in ssl_support:
+		percentage = []
+		total_sites = []
+		analysis_dates = []
+
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+			total_sites.append(len(data.analysis.category.values('result')))
+			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year) 
+			analysis_dates.append(date)
+		ssl_data[check] = percentage
+	###############################################################################################
+	security_checks_keys = ['header_csp', 'header_xfo', 'header_xssp', 'header_xcto', 'header_ref']
+	for key in security_checks_keys:
+		security_checks.append(CHECKS['security'][key]['short_title'])
+
+	for check in security_checks:
+		percentage = []
+
+		for data in time_data:
+			df = pd.read_json(data.result)
+			query = df[df['check'] == check]
+			percentage.append(query['percentage'].values[0])
+			total_sites.append(len(data.analysis.category.values('result')))
+			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year) 
+			analysis_dates.append(date)
+		security_data[check] = percentage
+	print(security_data)
+	return ssl_data, analysis_dates, security_data
