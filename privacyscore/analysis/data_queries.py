@@ -763,7 +763,7 @@ def enc_web_trends(myList = []) -> OrderedDict:
 		query = df[df['check'] == 'Server offers HTTPS']
 		percentage.append(query['percentage'].values[0])
 		date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
-		analysis_dates.append(date + ' (' + str(query['total_count'].values[0]) + ')')
+		analysis_dates.append(date + ' (' + str(query['count'].values[0]) + ')')
 	https_data['Server offers HTTPS'] = percentage
 	##############################################################################################
 	web_vul_keys = ['web_vuln_breach', 'web_vuln_poodle', 'web_vuln_sweet32',
