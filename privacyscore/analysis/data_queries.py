@@ -812,7 +812,7 @@ def enc_mail_trends(myList = []) -> OrderedDict:
 		query = df[df['check'] == 'Mail server supports encryption']
 		query1 = df[df['check'] == 'Domain has Mail server']
 		date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
-		analysis_dates.append(date + ' (' + str(query1['count'].values[0]) + ')')
+		analysis_dates.append(date + ' (' + str(query['count'].values[0]) + ')')
 		final_val = round((query['count'].values[0] / query1['count'].values[0]) * 100, 1)
 		percentage.append(final_val)
 	https_data['Mail server supports encryption'] = percentage
