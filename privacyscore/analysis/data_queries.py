@@ -728,8 +728,8 @@ def enc_web_trends(myList = []) -> OrderedDict:
 			query = df[df['check'] == check]
 			percentage.append(query['percentage'].values[0])
 			#total_sites.append(len(data.analysis.category.values('result')))
-			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
-			analysis_dates.append(date)
+		#	date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
+		#	analysis_dates.append(date)
 		check = check.replace('Web server supports ', '')
 		ssl_data[check] = percentage
 	###############################################################################################
@@ -762,6 +762,8 @@ def enc_web_trends(myList = []) -> OrderedDict:
 		df = pd.read_json(data.result)
 		query = df[df['check'] == 'Server offers HTTPS']
 		percentage.append(query['percentage'].values[0])
+		date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
+		analysis_dates.append(date + ' (' + str(query['total_count'].values[0]) + ')')
 	https_data['Server offers HTTPS'] = percentage
 	##############################################################################################
 	web_vul_keys = ['web_vuln_breach', 'web_vuln_poodle', 'web_vuln_sweet32',
@@ -804,12 +806,13 @@ def enc_mail_trends(myList = []) -> OrderedDict:
 	time_data = AnalysisTimeSeries.objects.all().order_by('id')
 
 	percentage = []
+	analysis_dates = []
 	for data in time_data:
 		df = pd.read_json(data.result)
 		query = df[df['check'] == 'Mail server supports encryption']
 		query1 = df[df['check'] == 'Domain has Mail server']
-		print(query)
-		print(query1)
+		date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
+		analysis_dates.append(date + ' (' + str(query1['total_count'].values[0]) + ')')
 		final_val = round((query['count'].values[0] / query1['count'].values[0]) * 100, 1)
 		percentage.append(final_val)
 	https_data['Mail server supports encryption'] = percentage
@@ -822,14 +825,13 @@ def enc_mail_trends(myList = []) -> OrderedDict:
 	for check in ssl_support:
 		percentage = []
 		total_sites = []
-		analysis_dates = []
 
 		for data in time_data:
 			df = pd.read_json(data.result)
 			query = df[df['check'] == check]
 			percentage.append(query['percentage'].values[0])
-			date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
-			analysis_dates.append(date)
+			#date = str(data.analysis.end.day) + '-' + str(data.analysis.end.month) + '-' + str(data.analysis.end.year)
+			#analysis_dates.append(date)
 		check = check.replace('Mail server supports ', '')
 		ssl_data[check] = percentage
 	###############################################################################################

@@ -17,6 +17,7 @@ from pandas.io.json import json_normalize
 import psycopg2 as pg
 import pandas.io.sql as psql
 import privacyscore.analysis.data_queries as queries
+import os
 
 from django.conf import settings
 from django.contrib import messages
