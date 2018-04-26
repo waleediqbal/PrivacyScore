@@ -24,3 +24,6 @@ gunicorn
 django-debug-toolbar
 fancyimpute
 seaborn
+sklearn
+missingno
+pandas-profiling

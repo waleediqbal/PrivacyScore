@@ -18,6 +18,9 @@ import psycopg2 as pg
 import pandas.io.sql as psql
 import privacyscore.analysis.data_queries as queries
 import os
+import numpy as np
+import missingno as mn
+import pandas_profiling
 
 from django.conf import settings
 from django.contrib import messages
@@ -35,6 +38,7 @@ from django import forms
 from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
+from pandas.plotting import scatter_matrix
 
 from privacyscore.backend.models import ListColumn, ListColumnValue, ListTag,  Scan, ScanList, Site, ScanResult, Analysis, AnalysisCategory
 from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
@@ -783,17 +787,20 @@ def analyse(request: HttpRequest) -> HttpResponse:
         d1 = {}
         
         d1['count'] = web.evaluated.rating.rating if web.evaluated.rating.rating == "critical" else None
-        d1['country'] = web.last_scan__result['a_locations'][0] if web.last_scan__result['a_locations'] else None
+        #d1['country'] = web.last_scan__result['a_locations'][0] if web.last_scan__result['a_locations'] else None
         country_group_json.get('items').append(d1)
 
         if web.last_scan__result:
-            analyse = web.analyse(DEFAULT_GROUP_ORDER)[1].items()
+            analyse = web.analyse(web.last_scan__result, DEFAULT_GROUP_ORDER).items()
         else:
             evaluation =  None
         if analyse:
             data = {}
             data['url']      = web.url
-            data['country']  = web.last_scan__result['a_locations'][0] if web.last_scan__result['a_locations'] else None
+            if 'a_locations' in web.last_scan__result:
+                data['country']  = web.last_scan__result['a_locations'][0] if len(web.last_scan__result['a_locations']) != 0 else None
+            else:
+                data['country'] = None
             data['results']  = []
             d = {}
             print(web.url)
@@ -1127,6 +1134,11 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
         df1 = pd.DataFrame(df, columns=['url'])
         df1.drop_duplicates('url', inplace = True)
         web_count = df1.shape[0]
+
+        #mn.bar(df2)
+        #plt.show()
+        #profile = pandas_profiling.ProfileReport(df_new)
+        #profile.to_file(outputfile="/home/waleed/Desktop/result.html")
 
         result = df
         ssl_detailed_list, web_vulnerabilities, hsts_groups, valid_hsts, hsts_included_data, https_data, other_checks, security_groups = queries.enc_web_results(result)

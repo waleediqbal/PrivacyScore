@@ -7,7 +7,9 @@ import numpy as np
 import Orange
 import os
 import random
-
+import math as ma
+import seaborn as sns
+import matplotlib.pyplot as plt
 import time
 import threading
 
@@ -15,6 +17,8 @@ import threading
 from Orange.data import Domain, DiscreteVariable, ContinuousVariable
 from orangecontrib.associate.fpgrowth import *
 from tkinter import *
+from sklearn.model_selection import train_test_split
+from urllib.parse import urlparse
 from collections import Counter, defaultdict
 from collections import OrderedDict
 from privacyscore.evaluation.result_groups import DEFAULT_GROUP_ORDER, RESULT_GROUPS
@@ -486,20 +490,34 @@ def web_privacy_results(myList = []) -> OrderedDict:
 
 	return privacy_groups, google_group
 
-def association(myList = [], min_supp = 0.1, confidence=0.1):
+def association(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""):
     df = myList
-    df = df.drop('url', axis=1)
-    df = df.drop('country', axis=1)
-    df = df.drop('mx_country', axis=1)
-    df = df.replace('None', np.nan)
+    mydict = []
+    for group in DEFAULT_GROUP_ORDER:
+        for check, data in CHECKS[group].items():
+            mydict.append(data.get('short_title'))
+
+    melted_data = pd.melt(df, id_vars=['url'], value_vars=mydict, var_name='check', value_name='value')
+
+    melted_data = melted_data.replace(to_replace='None', value=np.nan).dropna()
+
+    #melted_data.groupby(by=['check', 'value']).size().unstack().plot(kind='bar', stacked=True, figsize=(8,5))
+    #plt.show()
+
+    url_all = []
+    sites = Site.objects.all()
+    print(sites.count())
+    for site in sites:
+        url_parsed = urlparse(site.url)
+        url_all.append(url_parsed.netloc)
+    print(len(url_all))
+    print(len(list(set(url_all))))
 
     print("Total rows before : ", int(df.shape[0]))
 
     df['missing_val'] = df.isnull().sum(axis=1)
-#       df = df[df['missing_val'] <= np.ceil(df['missing_val'].mean())]
 
     print("Average missing values in each transaction = ", float(np.ceil(df['missing_val'].mean())))
-#       print("Total rows after dropping avg. missing value rows : ", int(df.shape[0]))
     df = df.drop('missing_val', axis=1)
 
 #       df = df.iloc[:, :-30]
@@ -524,8 +542,6 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
                     df.drop([column], axis=1, inplace=True)
     print(df.isnull().sum())
 
-    df = df.apply(lambda x: x.fillna(random.choice(['0', '1'])), axis=1)
-
     input_assoc_rules = df
     print(df.columns)
 
@@ -533,7 +549,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
     print("Total columns = ", int(df.shape[1]))
     total_rows = int(df.shape[0])
 
-    domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
+    domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1', '1000']) for check in input_assoc_rules.columns])
     data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
     data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
     min_support = float(min_supp)
@@ -592,25 +608,20 @@ def association(myList = [], min_supp = 0.1, confidence=0.1):
     #print(rules_df.to_csv(sep=' ', index=False, header=False))
     if not rules_df.empty:
         rules_df['support'] = rules_df['support'].apply(lambda x: x/total_rows)
-        rules_df = rules_df[rules_df['lift']>= 1]
+        rules_df = rules_df[rules_df['lift']>= float(min_lift)]
         #pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
         rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False)
 #        rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['lift'], ascending=False).groupby('consequent').head(10)
-        rules_df.to_csv(os.path.join('/repos/djangoapp/', "association_"+time.ctime()+".csv") , sep='\t', index=False)
+        rules_df.to_csv(os.path.join('/home/sysop/', "tls_"+name+".csv") , sep='\t', index=False)
 #        print(rules_df.to_csv(sep=' ', index=False, header=False))
     else:
         print("Unable to generate any rule")
 
-def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
+def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""):
     df = myList
-    df = df.drop('url', axis=1)
-    df = df.drop('country', axis=1)
-    df = df.drop('mx_country', axis=1)
-    df = df.replace('None', np.nan)
-
     print("Total rows before : ", int(df.shape[0]))
 
-    allowed_columns = ['Sites using third party embeds', 'Sites using trackers', 'Sites using Google Analytics',
+    allowed_columns = ['Sites using trackers', 'Sites setting third party cookies', 'Sites using Google Analytics',
     'Google Analytics privacy extension enabled', 'Web & mail servers in same country',
     'Content Security Policy header set', 'X-Frame-Options header set', 'Secure XSS Protection header set',
     'Secure X-Content-Type-Options header set', 'Referrer Policy header set', 'Server offers HTTPS',
@@ -622,19 +633,14 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
     print("Sum of missing values:")
     print(df.isnull().sum())
 
-    df = df.apply(lambda x: x.fillna(random.choice(['0', '1'])), axis=1)
-
     input_assoc_rules = df
     print(df.columns)
-
-#    file_df = pd.read_csv(os.path.join('/repos/djangoapp/', "association_Sun_Mar.csv") , sep='\t')
- #   print(file_df.to_csv(sep=' ', index=False))
 
     print("Total rows = ", int(df.shape[0]))
     print("Total columns = ", int(df.shape[1]))
     total_rows = int(df.shape[0])
 
-    domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1']) for check in input_assoc_rules.columns])
+    domain_checks = Domain([DiscreteVariable.make(name=check,values=['0', '1', '1000']) for check in input_assoc_rules.columns])
     data_gro_1 = Orange.data.Table.from_numpy(domain=domain_checks, X=input_assoc_rules.as_matrix(),Y= None)
     data_gro_1_en, mapping = OneHot.encode(data_gro_1, include_class=False)
     min_support = float(min_supp)
@@ -661,7 +667,7 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
 
     eligible_ante = [v for k,v in names.items()] #allowed both 0 and 1
     N = input_assoc_rules.shape[0]
-    print(N)
+
     rule_stats = list(rules_stats(rules, itemsets, N))
 
     print("Step 3: Stats for rules generated")
@@ -691,11 +697,11 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1):
 
     if not rules_df.empty:
         rules_df['support'] = rules_df['support'].apply(lambda x: x/total_rows)
-        rules_df = rules_df[rules_df['lift']>= 1]
+        rules_df = rules_df[rules_df['lift']>= float(min_lift)]
 #        rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False).groupby('consequent').head(10)
         rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False)
 #        print(pd.merge(rules_df, file_df, how='inner', on=['antecedent', 'consequent']).to_csv(sep=' ', index=False))
-        rules_df.to_csv(os.path.join('/repos/djangoapp/', "asso_without_tls"+time.ctime()+".csv") , sep='\t', index=False)
+        rules_df.to_csv(os.path.join('/home/sysop/', "ohne_tls_"+name+".csv") , sep='\t', index=False)
 #        print(rules_df.to_csv(sep=' ', index=False, header=False))
     else:
         print("Unable to generate any rule")
