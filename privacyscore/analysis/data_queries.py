@@ -525,7 +525,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""
 
     df =df[(df['Server offers HTTPS'] == '1') & (df['Mail server supports encryption'] == '1')]
 
-    restricted_columns = ['Sites setting first party cookies', 'Sites setting third party cookies' ,
+    restricted_columns = ['Sites setting first party cookies', 'Sites using third party embeds',
     'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
     'HSTS header duration sufficient', 'Server ready for HSTS preloading', 'Web server Protected against Secure Renegotiation',
     'Included in Chrome HSTS preload list', 'Web server supports SSL 2.0', 'Server offers HTTPS', 'Mail server supports encryption',
@@ -535,7 +535,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""
     'Mail server Protected against CRIME', 'Web server Protected against CRIME', 'Mail server Protected against CCS attack',
     'Web server Protected against CCS attack', 'Mail server Protected against DROWN', 'Web server Protected against DROWN',
     'Mail server Protected against FREAK', 'Web server Protected against FREAK', 'Mail server Protected against BREACH', 'Domain has Mail server',
-    'Mail server Protected against Ticketbleed', 'Web server Protected against Ticketbleed', 'Valid Public Key Pins']
+    'Mail server Protected against Ticketbleed', 'Web server Protected against Ticketbleed']
 
     for column in restricted_columns:
             if column in df.columns:
@@ -595,7 +595,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""
         #if named_cons in eligible_ante:
         rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
         ante_rule = ', '.join(rule_lhs)
-        if ante_rule and named_cons not in restricted_ante and len(rule_lhs)>1:
+        if ante_rule and len(rule_lhs)>1:
             rule_dict = {'support' : ex_rule_frm_rule_stat[2],
                          'confidence' : ex_rule_frm_rule_stat[3],
                      'lift' : ex_rule_frm_rule_stat[6],
@@ -684,7 +684,7 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1, min_lif
         #if named_cons in eligible_ante:
         rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
         ante_rule = ', '.join(rule_lhs)
-        if ante_rule and named_cons not in restricted_ante and len(rule_lhs)>0:
+        if ante_rule and len(rule_lhs)>1:
             rule_dict = {'support' : ex_rule_frm_rule_stat[2],
                          'confidence' : ex_rule_frm_rule_stat[3],
                          'lift' : ex_rule_frm_rule_stat[6],
