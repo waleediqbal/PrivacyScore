@@ -20,8 +20,9 @@ class Command(BaseCommand):
 		analyse.start = timezone.now()
 		analyse.save()
 
-		scan_list = ScanList.objects.get(id=121)
-		sites = scan_list.sites.all()
+		scan_list = ScanList.objects.get(id=121) # get majestic-million list in database
+		#sites = scan_list.sites.all() # for majestic-million
+		sites = Site.objects.all() # for all websites
 		if sites:
 			site_count = 0
 			for site in sites:
