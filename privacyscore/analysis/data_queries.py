@@ -603,15 +603,12 @@ def association(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""
                      'consequent':named_cons }
             rule_list_df.append(rule_dict)
     rules_df = pd.DataFrame(rule_list_df)
-    print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
-#       rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['support','confidence'], ascending=False).groupby('consequent').head(10).to_csv(sep=' ', index=False, $
-    #print(rules_df.to_csv(sep=' ', index=False, header=False))
+    print("{} association rules generated".format(rules_df.shape[0]))
+
     if not rules_df.empty:
         rules_df['support'] = rules_df['support'].apply(lambda x: x/total_rows)
         rules_df = rules_df[rules_df['lift']>= float(min_lift)]
-        #pruned_rules_df = rules_df.groupby(['antecedent','consequent']).max().reset_index()
         rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False)
-#        rules_df = rules_df[['antecedent','consequent', 'support','confidence','lift']].sort_values(['lift'], ascending=False).groupby('consequent').head(10)
         rules_df.to_csv(os.path.join('/home/sysop/', "tls_"+name+".csv") , sep='\t', index=False)
 #        print(rules_df.to_csv(sep=' ', index=False, header=False))
     else:
@@ -693,14 +690,12 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1, min_lif
             rule_list_df.append(rule_dict)
     rules_df = pd.DataFrame(rule_list_df)
 
-    print("Raw rules data frame of {} rules generated".format(rules_df.shape[0]))
+    print("{} association rules generated".format(rules_df.shape[0]))
 
     if not rules_df.empty:
         rules_df['support'] = rules_df['support'].apply(lambda x: x/total_rows)
         rules_df = rules_df[rules_df['lift']>= float(min_lift)]
-#        rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False).groupby('consequent').head(10)
         rules_df = rules_df[['antecedent','consequent', 'support','confidence', 'lift']].sort_values(['lift'], ascending=False)
-#        print(pd.merge(rules_df, file_df, how='inner', on=['antecedent', 'consequent']).to_csv(sep=' ', index=False))
         rules_df.to_csv(os.path.join('/home/sysop/', "ohne_tls_"+name+".csv") , sep='\t', index=False)
 #        print(rules_df.to_csv(sep=' ', index=False, header=False))
     else:
