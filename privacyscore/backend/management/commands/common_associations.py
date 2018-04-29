@@ -21,9 +21,12 @@ class Command(BaseCommand):
 		file_df.rename(columns={'support_y': 'support', 'confidence_y': 'confidence', 'lift_y': 'lift'}, inplace=True)
 		#file_df.plot.scatter('support', 'confidence')
 		#plt.scatter(x=file_df.support, y=file_df.confidence, s=file_df.lift)
+		print("first run rules {} " , file_df.shape[0])
 
 		file_df_1 = pd.read_csv(os.path.join('/home/waleed/Desktop', "iteration_1.csv") , sep='\t')
+		print("second run rules {} " , file_df_1.shape[0])
 		file_df_2 = pd.read_csv(os.path.join('/home/waleed/Desktop', "iteration_2.csv") , sep='\t')
+		print("third run rules {} " , file_df_2.shape[0])
 		col_allowed = ['antecedent', 'consequent', 'support_y', 'confidence_y', 'lift_y']
 		file_df_1 = file_df_1[col_allowed]
 		file_df_2 = file_df_2[col_allowed]
@@ -43,7 +46,8 @@ class Command(BaseCommand):
 		merged_df['lift'] = (merged_df['lift_x'] + merged_df['lift_y'])/3
 		col_final = ['antecedent', 'consequent', 'support', 'confidence', 'lift']
 		merged_df = merged_df[col_final]
-		print(merged_df.sort_values(['lift'], ascending=False).groupby('consequent').head(50))
+		print("final rules {}" , merged_df.shape[0])
+		#print(merged_df.sort_values(['lift'], ascending=False).groupby('consequent').head(50))
 
 		# groupby for visualization of rules
 		merged_df['rule_count'] = merged_df.groupby(["consequent"])['consequent'].transform("count")
@@ -63,13 +67,9 @@ class Command(BaseCommand):
 # 		merged_df = pd.merge(file_df, file_df_1, how='inner', on=['antecedent', 'consequent'])
 # 		merged_df_sort = merged_df.sort_values(['lift_x'], ascending=False).groupby('consequent').head(5)
 #		print(merged_df_sort.to_csv(sep=' '))
-# 		print(merged_df_sort.shape[0])
 
 #		file_df = pd.read_csv(os.path.join('/home/waleed/Desktop', "asso_with_tls_maj.csv") , sep='\t')
 #		file_df_1 = pd.read_csv(os.path.join('/home/waleed/Desktop', "asso_with_tls_ohne.csv") , sep='\t')
 #		merged_df = pd.merge(file_df, file_df_1, how='inner', on=['antecedent', 'consequent'])
-#		print(file_df.shape[0])
-		print(merged_df.shape[0])
 #		merged_df_sort = merged_df.sort_values(['lift_x'], ascending=False).groupby('consequent').head(5)
 #		print(merged_df_sort.to_csv(sep=' '))
-#		print(merged_df_sort.shape[0])

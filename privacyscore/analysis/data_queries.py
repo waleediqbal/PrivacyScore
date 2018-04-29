@@ -520,10 +520,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""
     print("Average missing values in each transaction = ", float(np.ceil(df['missing_val'].mean())))
     df = df.drop('missing_val', axis=1)
 
-#       df = df.iloc[:, :-30]
-#       df = df.iloc[30000:]
-
-    df =df[(df['Server offers HTTPS'] == '1') & (df['Mail server supports encryption'] == '1')]
+    #df =df[(df['Server offers HTTPS'] == '1') & (df['Mail server supports encryption'] == '1')]
 
     restricted_columns = ['Sites setting first party cookies', 'Sites using third party embeds',
     'Google Analytics privacy extension enabled', 'HTTP URL also reachable via HTTPS',
@@ -595,7 +592,7 @@ def association(myList = [], min_supp = 0.1, confidence=0.1, min_lift=1, name=""
         #if named_cons in eligible_ante:
         rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
         ante_rule = ', '.join(rule_lhs)
-        if ante_rule and len(rule_lhs)>1:
+        if ante_rule and len(rule_lhs)>1 and len(rule_lhs)<5:
             rule_dict = {'support' : ex_rule_frm_rule_stat[2],
                          'confidence' : ex_rule_frm_rule_stat[3],
                      'lift' : ex_rule_frm_rule_stat[6],
@@ -681,7 +678,7 @@ def association_without_TLS(myList = [], min_supp = 0.1, confidence=0.1, min_lif
         #if named_cons in eligible_ante:
         rule_lhs = [names[i] for i in ante if names[i] in eligible_ante]
         ante_rule = ', '.join(rule_lhs)
-        if ante_rule and len(rule_lhs)>1:
+        if ante_rule and len(rule_lhs)>1 and len(rule_lhs)<5:
             rule_dict = {'support' : ex_rule_frm_rule_stat[2],
                          'confidence' : ex_rule_frm_rule_stat[3],
                          'lift' : ex_rule_frm_rule_stat[6],
