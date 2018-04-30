@@ -38,16 +38,16 @@ class Command(BaseCommand):
 				if options['with_tls'] == 'Y' or options['with_tls'] == 'yes':
 					df_1 = df[(df['Server offers HTTPS'] == '1') & (df['Mail server supports encryption'] == '1')]
 					train, test = train_test_split(df_1, test_size=0.4)
-					queries.association(train, supp, conf, lift, "test_" + str(x))
-					queries.association(test, supp, conf, lift, "train_"+ str(x))
+					queries.association(train, supp, conf, lift, "train_" + str(x))
+					queries.association(test, supp, conf, lift, "test_"+ str(x))
 					file_df = pd.read_csv(os.path.join('/home/sysop/', "tls_"+"train_" + str(x)+".csv") , sep='\t')
 					file_df_1 = pd.read_csv(os.path.join('/home/sysop/', "tls_"+ "test_" + str(x) +".csv") , sep='\t')
 					merged_df = pd.merge(file_df, file_df_1, how='inner', on=['antecedent', 'consequent'])
 					merged_df.to_csv(os.path.join('/home/sysop/', "iteration_"+str(x)+".csv") , sep='\t', index=False)
 				else:
 					train, test = train_test_split(df, test_size=0.4)
-					queries.association_without_TLS(train, supp, conf, lift, "test_"+ str(x))
-					queries.association_without_TLS(test, supp, conf, lift, "train_"+ str(x))
+					queries.association_without_TLS(train, supp, conf, lift, "train_"+ str(x))
+					queries.association_without_TLS(test, supp, conf, lift, "test_"+ str(x))
 					file_df = pd.read_csv(os.path.join('/home/sysop/', "ohne_tls_"+"train_" + str(x)+".csv") , sep='\t')
 					file_df_1 = pd.read_csv(os.path.join('/home/sysop/', "ohne_tls_"+ "test_" + str(x) +".csv") , sep='\t')
 					merged_df = pd.merge(file_df, file_df_1, how='inner', on=['antecedent', 'consequent'])
