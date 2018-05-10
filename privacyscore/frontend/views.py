@@ -1238,7 +1238,13 @@ def web_privacy_dashboard(request: HttpRequest) -> HttpResponse:
         sss = analyse.category.values('result')
         df = json_normalize(sss, record_path='result')
 
-        df_country = df['country']
+        country_df = pd.DataFrame()
+        country_df['country'] = df['country']
+        country_df = country_df.replace(to_replace='None', value=np.nan).dropna()
+        country_df = pd.concat([pd.DataFrame(v, index=np.repeat(k,len(v))) for k,v in country_df.country.to_dict().items()])
+        country_df.columns = ['country']
+
+        df_country = country_df['country']
         countries = list(set(df_country))
         countries = list(filter(None, countries))
         countries.sort(key=str.lower)
@@ -1251,11 +1257,12 @@ def web_privacy_dashboard(request: HttpRequest) -> HttpResponse:
         country_form = CountryForm
 
         if ('country' in request.GET) and request.GET['country']!="":
+            country_form = CountryForm(request.GET)
             country_groups = OrderedDict()
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
                 form_country = country_dict[int(request.GET['country'])]
-                items = analyse.category.filter(result__contains=[{'country':form_country}]).values('result')
+                items = analyse.category.filter(result__contains=[{'country':[form_country]}]).values('result')
                 df = json_normalize(items, record_path='result')
 
         result = df
