@@ -190,11 +190,11 @@ def process_site(site_pk: int, analyse_id: int):
             site_data = {}
             site_data['url'] = site.url
             if 'a_locations' in site_res:
-                site_data['country'] = site_res['a_locations'][0] if len(site_res['a_locations']) != 0 else None
+                site_data['country'] = site_res['a_locations'] if len(site_res['a_locations']) != 0 else None
             else:
                 site_data['country'] = None
             if 'mx_locations' in site_res:
-                site_data['mx_country'] = site_res['mx_locations'][0] if len(site_res['mx_locations']) != 0 else None
+                site_data['mx_country'] = site_res['mx_locations'] if len(site_res['mx_locations']) != 0 else None
             else:
                 site_data['mx_country'] = None
             for result in analysis:

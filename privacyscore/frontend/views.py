@@ -1096,14 +1096,15 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
     web_vulnerabilities = []
 
     if analyse:
-        sss = analyse.category.values('result')
-        df = json_normalize(sss, record_path='result')
-        #df.drop('country', axis=1, inplace=True)
-        #df.drop('mx_country', axis=1, inplace=True)
-        #df.drop('url', axis=1, inplace=True)
-        #result = df.apply(pd.value_counts)
+        json_results = analyse.category.values('result')
+        df = json_normalize(json_results, record_path='result')
+        country_df = pd.DataFrame()
+        country_df['country'] = df['country']
+        country_df = country_df.replace(to_replace='None', value=np.nan).dropna()
+        country_df = pd.concat([pd.DataFrame(v, index=np.repeat(k,len(v))) for k,v in country_df.country.to_dict().items()])
+        country_df.columns = ['country']
 
-        df_country = df['country']
+        df_country = country_df['country']
         countries = list(set(df_country))
         countries = list(filter(None, countries))
         countries.sort(key=str.lower)
@@ -1121,11 +1122,11 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
                 form_country = country_dict[int(request.GET['country'])]
-                items = analyse.category.filter(result__contains=[{'country':form_country}]).values('result')
+                items = analyse.category.filter(result__contains=[{'country':[form_country]}]).values('result')
                 df = json_normalize(items, record_path='result')
 
         country_count = pd.DataFrame()
-        country_count = df.country.value_counts().reset_index().rename(columns={'index': 'country', 'country': 'z'})
+        country_count = country_df.country.value_counts().reset_index().rename(columns={'index': 'country', 'country': 'z'})
         country_count['code'] = country_count['country'].map(COUNTRY_DICT)
         country_count['z'] = round((country_count['z'] / country_count['z'].sum()) * 100, 1)
         country_json = country_count.to_json(orient='records')
@@ -1167,12 +1168,17 @@ def enc_web_dashboard(request: HttpRequest) -> HttpResponse:
 
 def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
     analyse = Analysis.objects.exclude(end__isnull=True).order_by('-end')[0]
-    sss = analyse.category.values('result')
 
-    df = json_normalize(sss, record_path='result')
-#    print(df.apply(pd.value_counts).fillna(0))
     if analyse:
-        df_country = df['mx_country']
+        json_results = analyse.category.values('result')
+        df = json_normalize(json_results, record_path='result')
+        country_df = pd.DataFrame()
+        country_df['mx_country'] = df['mx_country']
+        country_df = country_df.replace(to_replace='None', value=np.nan).dropna()
+        country_df = pd.concat([pd.DataFrame(v, index=np.repeat(k,len(v))) for k,v in country_df.mx_country.to_dict().items()])
+        country_df.columns = ['mx_country']
+
+        df_country = country_df['mx_country']
         countries = list(set(df_country))
         countries = list(filter(None, countries))
         countries.sort(key=str.lower)
@@ -1190,7 +1196,7 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
             country_dict = dict(country_choices)
             if int(request.GET['country']) in country_dict:
                 form_country = country_dict[int(request.GET['country'])]
-                items = analyse.category.filter(result__contains=[{'mx_country':form_country}]).values('result')
+                items = analyse.category.filter(result__contains=[{'mx_country':[form_country]}]).values('result')
                 df = json_normalize(items, record_path='result')
 
         # total number of websites in this country #
@@ -1199,7 +1205,7 @@ def enc_mail_dashboard(request: HttpRequest) -> HttpResponse:
         web_count = df1.shape[0]
         result = df
 
-        country_count = df.mx_country.value_counts().reset_index().rename(columns={'index': 'mx_country', 'mx_country': 'z'})
+        country_count = country_df.mx_country.value_counts().reset_index().rename(columns={'index': 'mx_country', 'mx_country': 'z'})
         country_count['code'] = country_count['mx_country'].map(COUNTRY_DICT)
         country_count['z'] = round((country_count['z'] / country_count['z'].sum()) * 100, 1)
         country_json = country_count.to_json(orient='records')
