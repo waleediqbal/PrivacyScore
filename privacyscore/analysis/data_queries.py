@@ -801,7 +801,7 @@ def enc_mail_trends(myList = []) -> OrderedDict:
 	ssl_data = OrderedDict()
 	web_vul_data = OrderedDict()
 	web_vul_data_1 = OrderedDict()
-	time_data = AnalysisTimeSeries.objects.all().order_by('id')
+	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2]
 
 	percentage = []
 	analysis_dates = []
@@ -869,7 +869,7 @@ def privacy_trends(myList = []) -> OrderedDict:
 	privacy_checks = []
 	privacy_data = OrderedDict()
 	privacy_data_1 = OrderedDict()
-	time_data = AnalysisTimeSeries.objects.all().order_by('id')
+	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2]
 
 	embeds_keys = ['third_parties', 'third_party-trackers', 'cookies_3rd_party',
 	'cookies_1st_party']
