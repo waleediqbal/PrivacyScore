@@ -522,5 +522,7 @@ class AnalysisTimeSeries(models.Model):
     result = postgres_fields.JSONField(null=True, blank=True)
     analysis = models.ForeignKey(
         Analysis, on_delete=models.CASCADE, related_name='time_data', null=True, blank=True)
+    scanlist = models.ForeignKey(
+        ScanList, on_delete=models.CASCADE, null=True, blank=True)
     def __str__(self) -> str:
         return '{}'.format(str(self.analysis))

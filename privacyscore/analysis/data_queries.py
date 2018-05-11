@@ -715,7 +715,7 @@ def enc_web_trends(myList = []) -> OrderedDict:
 	for key in ssl_support_keys:
 		ssl_support.append(CHECKS['ssl'][key]['short_title'])
 
-	time_data = AnalysisTimeSeries.objects.all().order_by('id')
+	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2]
 	for check in ssl_support:
 		percentage = []
 		total_sites = []
