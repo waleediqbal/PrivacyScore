@@ -290,15 +290,24 @@ def enc_web_results(myList = []) -> OrderedDict:
 	melted_data2 = melted_data.groupby(level = [0]).transform(sum).reset_index(name="total_count")
 	melted_data2['count'] = melted_data1['count']
 
-	#melted_data2['percentage'] = round((melted_data2['count'] / melted_data2['total_count']) * 100, 1)
-	melted_data2['value'] = melted_data2['value'].map({'0': 'bad', '1': 'good', '2': 'neutral'})
-	melted_data2['percentage'] = round((melted_data2['count'] / melted_data2['total_count']) * 100, 1)
-
 	ssl_support_keys = ['web_insecure_protocols_sslv2', 'web_insecure_protocols_sslv3', 'web_secure_protocols_tls1',
 	'web_secure_protocols_tls1_1', 'web_secure_protocols_tls1_2']
 
 	for key in ssl_support_keys:
 		ssl_support.append(CHECKS['ssl'][key]['short_title'])
+
+	#melted_data2['percentage'] = round((melted_data2['count'] / melted_data2['total_count']) * 100, 1)
+	melted_data2['value'] = melted_data2['value'].map({'0': 'bad', '1': 'good', '2': 'neutral'})
+	query_1  = melted_data2.query('check == "Server offers HTTPS"')
+	pass_count_1 = query_1[query_1['value'] == 'good']
+	for ssl_ver in ssl_support:
+		melted_data2.loc[melted_data2['check'] == ssl_ver, 'total_count'] = pass_count_1['count'].values[0]
+		query  = melted_data2.query('check == @ssl_ver')
+		pass_count = query[query['value'] == 'good']
+		f_count = query['total_count'].values[0] - pass_count['count'].values[0]
+		melted_data2.loc[(melted_data2["check"] == ssl_ver) & (melted_data2["value"] == "bad"), "count"] = f_count
+
+	melted_data2['percentage'] = round((melted_data2['count'] / melted_data2['total_count']) * 100, 1)
 
 	web_vul_keys = ['web_vuln_heartbleed', 'web_vuln_ccs', 'web_vuln_ticketbleed', 'web_vuln_secure_renego',
 	'web_vuln_secure_client_renego', 'web_vuln_crime', 'web_vuln_breach', 'web_vuln_poodle', 'web_vuln_sweet32',
@@ -432,6 +441,12 @@ def enc_mail_results(myList = []) -> OrderedDict:
 		tls_ssl.append(CHECKS['mx'][key]['short_title'])
 
 	tls_data = melted_data2.loc[melted_data2['check'].isin(tls_ssl)]
+	for check in tls_ssl:
+		tls_data.loc[tls_data['check'] == check, 'total_count'] = pass_per['count'].values[0]
+		query  = melted_data2.query('check == @check')
+		pass_count = query[query['value'] == 'good']
+		f_count =  pass_per['count'].values[0] - pass_count['count'].values[0]
+		tls_data.loc[(tls_data["check"] == check) & (tls_data["value"] == "bad"), "count"] = f_count
 
 	tls_data['check'] = pd.Categorical(
 	    tls_data['check'],
@@ -715,7 +730,7 @@ def enc_web_trends(myList = []) -> OrderedDict:
 	for key in ssl_support_keys:
 		ssl_support.append(CHECKS['ssl'][key]['short_title'])
 
-	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2]
+	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2][::-1]
 	for check in ssl_support:
 		percentage = []
 		total_sites = []
@@ -801,7 +816,7 @@ def enc_mail_trends(myList = []) -> OrderedDict:
 	ssl_data = OrderedDict()
 	web_vul_data = OrderedDict()
 	web_vul_data_1 = OrderedDict()
-	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2]
+	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2][::-1]
 
 	percentage = []
 	analysis_dates = []
@@ -869,7 +884,7 @@ def privacy_trends(myList = []) -> OrderedDict:
 	privacy_checks = []
 	privacy_data = OrderedDict()
 	privacy_data_1 = OrderedDict()
-	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2]
+	time_data = AnalysisTimeSeries.objects.all().order_by('-id')[:2][::-1]
 
 	embeds_keys = ['third_parties', 'third_party-trackers', 'cookies_3rd_party',
 	'cookies_1st_party']
