@@ -568,10 +568,10 @@ CHECKS['ssl']['web_vuln_rc4'] = {
     'keys': {'web_vulnerabilities', 'web_has_ssl'},
     'category': lambda **keys: {
         'description': _('The server supports the outdated and insecure RC4 cipher.'),
-        'classification': 0
+        'classification': 1
     } if keys["web_vulnerabilities"].get('rc4') else {
         'description': _('The server does not support the outdated and insecure RC4 cipher.'),
-        'classification': 1
+        'classification': 0
     } if keys['web_has_ssl'] else None,
     'missing': None,
 }
@@ -863,10 +863,10 @@ CHECKS['mx']['mx_vuln_rc4'] = {
     'keys': {'mx_vulnerabilities', 'mx_has_ssl'},
     'category': lambda **keys: {
         'description': _('The server supports the outdated and insecure RC4 cipher.'),
-        'classification': 0,
+        'classification': 1,
     } if keys["mx_vulnerabilities"].get('rc4') else {
         'description': _('The server does not support the outdated and insecure RC4 cipher.'),
-        'classification': 1,
+        'classification': 0,
     } if keys['mx_has_ssl'] else None,
     'missing': None,
 }
